@@ -15,7 +15,7 @@ D:/数字孪生/huaweibei
 -logFile
 Logs/AssetImportWorker1.log
 -srvPort
-54475
+64969
 Successfully changed project path to: D:/数字孪生/huaweibei
 D:/数字孪生/huaweibei
 [UnityMemory] Configuration Parameters - Can be set up in boot.config
@@ -49,15 +49,15 @@ D:/数字孪生/huaweibei
     "memorysetup-temp-allocator-size-cloud-worker=32768"
     "memorysetup-temp-allocator-size-gi-baking-worker=262144"
     "memorysetup-temp-allocator-size-gfx=262144"
-Player connection [28676]  Target information:
+Player connection [18800]  Target information:
 
-Player connection [28676]  * "[IP] 192.168.43.29 [Port] 0 [Flags] 2 [Guid] 4105616291 [EditorId] 4105616291 [Version] 1048832 [Id] WindowsEditor(7,LAPTOP-BD4SDQLE) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+Player connection [18800]  * "[IP] 192.168.43.29 [Port] 0 [Flags] 2 [Guid] 2502905207 [EditorId] 2502905207 [Version] 1048832 [Id] WindowsEditor(7,LAPTOP-BD4SDQLE) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
 
-Player connection [28676] Host joined multi-casting on [225.0.0.222:54997]...
-Player connection [28676] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Player connection [18800] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [18800] Host joined alternative multi-casting on [225.0.0.222:34997]...
 Input System module state changed to: Initialized.
 [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
-Refreshing native plugins compatible for Editor in 21.99 ms, found 4 plugins.
+Refreshing native plugins compatible for Editor in 19.45 ms, found 4 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Initialize engine version: 2022.3.62f3c1 (1623fc0bbb97)
 [Subsystems] Discovering subsystems at path D:/Program Files/2022.3.62f3c1/Editor/Data/Resources/UnitySubsystems
@@ -73,49 +73,49 @@ Initialize mono
 Mono path[0] = 'D:/Program Files/2022.3.62f3c1/Editor/Data/Managed'
 Mono path[1] = 'D:/Program Files/2022.3.62f3c1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
 Mono config path = 'D:/Program Files/2022.3.62f3c1/Editor/Data/MonoBleedingEdge/etc'
-Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56520
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56684
 Begin MonoManager ReloadAssembly
 Registering precompiled unity dll's ...
 Register platform support module: D:/Program Files/2022.3.62f3c1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
 Register platform support module: D:/Program Files/2022.3.62f3c1/Editor/Data/PlaybackEngines/AndroidPlayer/UnityEditor.Android.Extensions.dll
 Register platform support module: D:/Program Files/2022.3.62f3c1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
-Registered in 0.004652 seconds.
-- Loaded All Assemblies, in  0.300 seconds
+Registered in 0.005653 seconds.
+- Loaded All Assemblies, in  0.348 seconds
 Native extension for WindowsStandalone target not found
 Native extension for Android target not found
-Android Extension - Scanning For ADB Devices 419 ms
+Android Extension - Scanning For ADB Devices 314 ms
 Native extension for WebGL target not found
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  0.695 seconds
-Domain Reload Profiling: 996ms
-	BeginReloadAssembly (107ms)
+- Finished resetting the current domain, in  0.514 seconds
+Domain Reload Profiling: 863ms
+	BeginReloadAssembly (181ms)
 		ExecutionOrderSort (0ms)
 		DisableScriptedObjects (0ms)
 		BackupInstance (0ms)
 		ReleaseScriptingObjects (0ms)
-		CreateAndSetChildDomain (0ms)
-	RebuildCommonClasses (20ms)
+		CreateAndSetChildDomain (1ms)
+	RebuildCommonClasses (21ms)
 	RebuildNativeTypeToScriptingClass (6ms)
-	initialDomainReloadingComplete (35ms)
-	LoadAllAssembliesAndSetupDomain (134ms)
-		LoadAssemblies (109ms)
+	initialDomainReloadingComplete (36ms)
+	LoadAllAssembliesAndSetupDomain (105ms)
+		LoadAssemblies (182ms)
 		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (130ms)
-			TypeCache.Refresh (128ms)
-				TypeCache.ScanAssembly (118ms)
+		AnalyzeDomain (102ms)
+			TypeCache.Refresh (101ms)
+				TypeCache.ScanAssembly (90ms)
 			ScanForSourceGeneratedMonoScriptInfo (0ms)
 			ResolveRequiredComponents (0ms)
-	FinalizeReload (696ms)
+	FinalizeReload (515ms)
 		ReleaseScriptCaches (0ms)
 		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (663ms)
+		SetupLoadedEditorAssemblies (485ms)
 			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (533ms)
-			SetLoadedEditorAssemblies (4ms)
+			InitializePlatformSupportModulesInManaged (369ms)
+			SetLoadedEditorAssemblies (3ms)
 			RefreshPlugins (0ms)
-			BeforeProcessingInitializeOnLoad (2ms)
-			ProcessInitializeOnLoadAttributes (87ms)
-			ProcessInitializeOnLoadMethodAttributes (37ms)
+			BeforeProcessingInitializeOnLoad (1ms)
+			ProcessInitializeOnLoadAttributes (79ms)
+			ProcessInitializeOnLoadMethodAttributes (34ms)
 			AfterProcessingInitializeOnLoad (0ms)
 			EditorAssembliesLoaded (0ms)
 		ExecutionOrderSort2 (0ms)
@@ -124,52 +124,52 @@ Domain Reload Profiling: 996ms
 Worker process is ready to serve import requests
 Caller must complete domain reload
 Begin MonoManager ReloadAssembly
-- Loaded All Assemblies, in  0.957 seconds
+- Loaded All Assemblies, in  0.526 seconds
 Native extension for WindowsStandalone target not found
 Native extension for Android target not found
 Native extension for WebGL target not found
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  0.418 seconds
-Domain Reload Profiling: 1375ms
-	BeginReloadAssembly (308ms)
+- Finished resetting the current domain, in  0.354 seconds
+Domain Reload Profiling: 880ms
+	BeginReloadAssembly (125ms)
 		ExecutionOrderSort (0ms)
 		DisableScriptedObjects (4ms)
 		BackupInstance (0ms)
 		ReleaseScriptingObjects (0ms)
-		CreateAndSetChildDomain (22ms)
-	RebuildCommonClasses (24ms)
+		CreateAndSetChildDomain (15ms)
+	RebuildCommonClasses (21ms)
 	RebuildNativeTypeToScriptingClass (6ms)
-	initialDomainReloadingComplete (29ms)
-	LoadAllAssembliesAndSetupDomain (590ms)
-		LoadAssemblies (664ms)
+	initialDomainReloadingComplete (24ms)
+	LoadAllAssembliesAndSetupDomain (350ms)
+		LoadAssemblies (305ms)
 		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (181ms)
-			TypeCache.Refresh (161ms)
-				TypeCache.ScanAssembly (142ms)
-			ScanForSourceGeneratedMonoScriptInfo (13ms)
-			ResolveRequiredComponents (4ms)
-	FinalizeReload (419ms)
+		AnalyzeDomain (131ms)
+			TypeCache.Refresh (113ms)
+				TypeCache.ScanAssembly (99ms)
+			ScanForSourceGeneratedMonoScriptInfo (11ms)
+			ResolveRequiredComponents (5ms)
+	FinalizeReload (354ms)
 		ReleaseScriptCaches (0ms)
 		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (292ms)
+		SetupLoadedEditorAssemblies (264ms)
 			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (13ms)
+			InitializePlatformSupportModulesInManaged (11ms)
 			SetLoadedEditorAssemblies (2ms)
 			RefreshPlugins (0ms)
-			BeforeProcessingInitializeOnLoad (40ms)
-			ProcessInitializeOnLoadAttributes (221ms)
-			ProcessInitializeOnLoadMethodAttributes (15ms)
-			AfterProcessingInitializeOnLoad (2ms)
+			BeforeProcessingInitializeOnLoad (33ms)
+			ProcessInitializeOnLoadAttributes (202ms)
+			ProcessInitializeOnLoadMethodAttributes (14ms)
+			AfterProcessingInitializeOnLoad (1ms)
 			EditorAssembliesLoaded (0ms)
 		ExecutionOrderSort2 (0ms)
-		AwakeInstancesAfterBackupRestoration (7ms)
-Launched and connected shader compiler UnityShaderCompiler.exe after 0.08 seconds
-Refreshing native plugins compatible for Editor in 12.33 ms, found 4 plugins.
+		AwakeInstancesAfterBackupRestoration (5ms)
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.06 seconds
+Refreshing native plugins compatible for Editor in 6.63 ms, found 4 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
-Unloading 3524 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 22 unused Assets / (56.5 KB). Loaded Objects now: 3992.
-Memory consumption went from 133.4 MB to 133.3 MB.
-Total: 6.311100 ms (FindLiveObjects: 0.398400 ms CreateObjectMapping: 0.098700 ms MarkObjects: 5.503900 ms  DeleteObjects: 0.306200 ms)
+Unloading 3658 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 34 unused Assets / (1.8 MB). Loaded Objects now: 4114.
+Memory consumption went from 147.7 MB to 145.9 MB.
+Total: 3.512200 ms (FindLiveObjects: 0.207400 ms CreateObjectMapping: 0.057600 ms MarkObjects: 2.966300 ms  DeleteObjects: 0.279700 ms)
 
 AssetImportParameters requested are different than current active one (requested -> active):
   custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
@@ -187,27 +187,61 @@ AssetImportParameters requested are different than current active one (requested
   custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
 ========================================================================
 Received Import Request.
-  Time since last request: 24936.102115 seconds.
-  path: Assets/Skybox16/sky16_02.tif
-  artifactKey: Guid(784d1223399b2c5458a89fc09531d950) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Skybox16/sky16_02.tif using Guid(784d1223399b2c5458a89fc09531d950) Importer(815301076,1909f56bfc062723c751e8b465ee728b) [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
+  Time since last request: 7140.470543 seconds.
+  path: Assets/材质/New Material 1.mat
+  artifactKey: Guid(f454707937e471043a7e5ff0c2c7571c) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/材质/New Material 1.mat using Guid(f454707937e471043a7e5ff0c2c7571c) Importer(815301076,1909f56bfc062723c751e8b465ee728b) [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
 [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
- -> (artifact id: 'eee45b3578604f410868082d379a0df4') in 0.065719 seconds
+ -> (artifact id: '74e1c42ab12d9d78b4bffed3bfa3c6bd') in 0.239943 seconds
+Number of updated asset objects reloaded before import = 0
+Number of asset objects unloaded after import = 1
+========================================================================
+Received Import Request.
+  Time since last request: 1176.963842 seconds.
+  path: Assets/材质/New Material 1.mat
+  artifactKey: Guid(f454707937e471043a7e5ff0c2c7571c) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/材质/New Material 1.mat using Guid(f454707937e471043a7e5ff0c2c7571c) Importer(815301076,1909f56bfc062723c751e8b465ee728b) [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
+[PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
+ -> (artifact id: '20d134361f9be67eeefc068bd90ce853') in 0.018621 seconds
+Number of updated asset objects reloaded before import = 0
+Number of asset objects unloaded after import = 1
+========================================================================
+Received Import Request.
+  Time since last request: 0.000022 seconds.
+  path: Assets/材质/New Material 3.mat
+  artifactKey: Guid(76c5d09248079ec4ea63b461943f6621) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/材质/New Material 3.mat using Guid(76c5d09248079ec4ea63b461943f6621) Importer(815301076,1909f56bfc062723c751e8b465ee728b) [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
+[PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
+ -> (artifact id: '52284cf617ad0029131be57c32ebfe28') in 0.014963 seconds
+Number of updated asset objects reloaded before import = 0
+Number of asset objects unloaded after import = 1
+========================================================================
+Received Import Request.
+  Time since last request: 110.954059 seconds.
+  path: Assets/材质/New Material 4.mat
+  artifactKey: Guid(18d6f65c1ce21314e8552770e820921b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/材质/New Material 4.mat using Guid(18d6f65c1ce21314e8552770e820921b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
+[PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
+ -> (artifact id: '913489cca725e84f7f2d42b1cd835e42') in 0.015798 seconds
+Number of updated asset objects reloaded before import = 0
+Number of asset objects unloaded after import = 1
+========================================================================
+Received Import Request.
+  Time since last request: 872.119438 seconds.
+  path: Assets/材质/房顶.mat
+  artifactKey: Guid(a784df64d14c58a4a82b3d904d66c092) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/材质/房顶.mat using Guid(a784df64d14c58a4a82b3d904d66c092) Importer(815301076,1909f56bfc062723c751e8b465ee728b) [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
+[PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
+ -> (artifact id: 'bb237cbc468f280efbbe938e33a852eb') in 0.029420 seconds
 Number of updated asset objects reloaded before import = 0
 Number of asset objects unloaded after import = 2
 ========================================================================
 Received Import Request.
-  Time since last request: 0.000042 seconds.
-  path: Assets/Skybox16/sky16_05.tif
-  artifactKey: Guid(b254e933c8c33804db3355d7be9fb692) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Skybox16/sky16_05.tif using Guid(b254e933c8c33804db3355d7be9fb692) Importer(815301076,1909f56bfc062723c751e8b465ee728b) [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
+  Time since last request: 0.000024 seconds.
+  path: Assets/材质/窗户.mat
+  artifactKey: Guid(18d6f65c1ce21314e8552770e820921b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/材质/窗户.mat using Guid(18d6f65c1ce21314e8552770e820921b) Importer(815301076,1909f56bfc062723c751e8b465ee728b) [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
 [PhysX] Initialized MultithreadedTaskDispatcher with 32 workers.
- -> (artifact id: '713a23e6351316fbcccc064826ae23a0') in 0.014706 seconds
+ -> (artifact id: 'd7408e10cf669bafdcfbae7b1032864c') in 0.025789 seconds
 Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 2
-Editor requested this worker to shutdown with reason: Scaling down because of idle timeout
-TcpMessagingSession - receive error
-AssetImportWorkerClient::OnTransportError - code=2 error=End of file
-AssetImportWorker is now disconnected from the server
-Process exiting
-Exiting without the bug reporter. Application will terminate with return code 0
+Number of asset objects unloaded after import = 1
