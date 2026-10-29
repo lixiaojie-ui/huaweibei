@@ -1,0 +1,17 @@
+# Unity 生成目录（不需要提交）
+Library/
+Temp/
+Obj/
+Logs/
+UserSettings/
+MemoryCaptures/
+Recordings/
+
+# 构建产物
+Build/
+Builds/
+
+# IDE / 临时文件
+.vs/
+*.csproj
+*.sln.DotSettings.user
