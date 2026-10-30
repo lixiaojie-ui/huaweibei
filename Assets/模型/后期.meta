@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/模型/后期.meta
 guid: 1838c5f44ed99104b90f3cf6e585a6c6
+========
+guid: e92e334a6820b9b43b7da80f20422736
+>>>>>>>> ec3517005fec8595dabafa3a144770798e3d156d:Assets/RES.meta
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}

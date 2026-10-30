@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Unity 生成目录（Unity 会自动重建，不需要提交）
+=======
+# Unity 生成目录（不需要提交）
+>>>>>>> ec3517005fec8595dabafa3a144770798e3d156d
 Library/
 Temp/
 Obj/
@@ -14,3 +18,7 @@ Builds/
 # IDE / 临时文件
 .vs/
 *.csproj
+<<<<<<< HEAD
+=======
+*.sln.DotSettings.user
+>>>>>>> ec3517005fec8595dabafa3a144770798e3d156d
