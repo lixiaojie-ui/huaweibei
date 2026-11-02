@@ -1,4 +1,4 @@
-# Unity 生成目录（不需要提交）
+# Unity 生成目录（Unity 会自动重建，不需要提交）
 Library/
 Temp/
 Obj/
