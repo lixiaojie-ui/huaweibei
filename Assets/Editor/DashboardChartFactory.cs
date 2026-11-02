@@ -22,6 +22,12 @@ namespace Daima
         static Sprite _ringSprite;
         // 圆环精灵（Assets/Resources/ring.png），用于圆环 KPI
         public static Sprite RingSprite { get { if (_ringSprite == null) _ringSprite = Resources.Load<Sprite>("ring"); return _ringSprite; } }
+        static Sprite _roundedBarGrad;
+        // 竖向渐变圆头柱（白底 alpha 上实下虚，颜色由 Image.color 着色）
+        public static Sprite RoundedBarGrad { get { if (_roundedBarGrad == null) _roundedBarGrad = Resources.Load<Sprite>("bar_round_grad"); return _roundedBarGrad; } }
+        static Sprite _fillGrad;
+        // 横向渐变进度条（左深青→右亮青，本身带色，Image.color 需为白色）
+        public static Sprite FillGrad { get { if (_fillGrad == null) _fillGrad = Resources.Load<Sprite>("bar_fill_grad"); return _fillGrad; } }
         public static readonly Color Orange = new Color(0.98f, 0.70f, 0.24f);      // #FAB33D
         public static readonly Color Green = new Color(0.26f, 0.87f, 0.62f);       // #42DE9E
         public static readonly Color TextColor = new Color(0.905f, 0.950f, 0.980f);
@@ -212,8 +218,8 @@ namespace Daima
 
                 Image bar = Img(root, "Bar", i == peakIndex ? BlueLight : Blue,
                                 x, y, barWidth, barHeight, true);
-                // 运行时也套用圆角精灵，与编辑模式下的静态柱体保持一致
-                if (RoundedBar != null) { bar.sprite = RoundedBar; bar.type = Image.Type.Sliced; }
+                // 竖向渐变圆头柱：顶部实色、底部渐隐（Simple 让渐变铺满整根柱）
+                if (RoundedBarGrad != null) { bar.sprite = RoundedBarGrad; bar.type = Image.Type.Simple; }
                 AttachTooltip(bar, tooltip,
                     row.date + "\n计划工时 " + row.planHours + " h\n可用产能 " + row.capacity +
                     " h\n负载率 " + row.RateText);
@@ -250,7 +256,7 @@ namespace Daima
 
             float legendX = 0f;
             legendX = Legend(root, font, legendX, 6f, new Color(0.55f, 0.65f, 0.78f, 0.55f), "计划任务");
-            Legend(root, font, legendX, 6f, Violet, "已完成任务");
+            Legend(root, font, legendX, 6f, Blue, "已完成任务");
 
             int totalPlanned = 0, totalCompleted = 0;
             foreach (RouteRowData row in rows)
@@ -281,11 +287,12 @@ namespace Daima
                 float barY = y + 12f;
                 Image track = Img(root, "Track", Track, trackX, barY, trackWidth, trackHeight, true);
                 float fillWidth = Mathf.Max(2f, trackWidth * row.rate / 100f);
-                Img(root, "Fill", Violet, trackX, barY, fillWidth, trackHeight);
+                Image fill = Img(root, "Fill", Color.white, trackX, barY, fillWidth, trackHeight);
+                if (FillGrad != null) fill.sprite = FillGrad;   // 横向渐变：左深青→右亮青
 
                 float percentX = trackX + fillWidth + 7f;
                 if (percentX + 46f > width) percentX = width - 46f;
-                Txt(root, "Percent", row.RateText, 11, VioletLight, TextAnchor.MiddleLeft,
+                Txt(root, "Percent", row.RateText, 11, BlueLight, TextAnchor.MiddleLeft,
                     percentX, barY - 3f, 44f, 16f, font);
 
                 AttachTooltip(track, tooltip,

@@ -21,7 +21,7 @@ namespace Daima
     public class DashboardTablesController : MonoBehaviour
     {
         public const string TablePrefix = "__Table_";
-        public const int CurrentContentVersion = 10;
+        public const int CurrentContentVersion = 11;
 
         [Header("内容挂载点（Canvas left / Image1、Image2；Canvas right / Image3~Image5）")]
         public RectTransform image1;
