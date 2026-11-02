@@ -33,7 +33,7 @@ namespace Daima
         public static readonly Color TextColor = new Color(0.905f, 0.950f, 0.980f);
         public static readonly Color Muted = new Color(0.620f, 0.740f, 0.850f);
         public static readonly Color GridColor = new Color(0.70f, 0.88f, 1f, 0.10f);
-        public static readonly Color Track = new Color(1f, 1f, 1f, 0.10f);
+        public static readonly Color Track = new Color(0.42f, 0.55f, 0.68f, 0.35f);
         public static readonly Color EdgeColor = new Color(0.30f, 0.70f, 0.95f, 0.35f);
 
         // ------------------------------------------------------------------ Image2：AGV 实时调度示意
