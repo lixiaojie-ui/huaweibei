@@ -9,7 +9,9 @@ namespace Daima
     /// </summary>
     public static class DashboardTablesBootstrap
     {
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        // 注意：DashboardTablesController 位于 Assets/Editor，属于编辑器程序集，运行时无法挂载。
+        // 场景里的内容已经是烘焙好的，不再需要这个兜底；否则每次 Play 都会留下一个空的 __DashboardTables。
+        // [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void AutoCreate()
         {
             if (Object.FindObjectOfType<DashboardTablesController>() != null) return;
