@@ -24,19 +24,19 @@ namespace Daima
     public class ChartEntranceAnimator : MonoBehaviour
     {
         [Header("单根柱子/进度条的动画时长")]
-        public float growDuration = 0.55f;
+        public float growDuration = 1.0f;
 
         [Header("每个元素之间的间隔")]
-        public float stagger = 0.055f;
+        public float stagger = 0.09f;
 
         [Header("开始前的延迟")]
-        public float startDelay = 0.15f;
+        public float startDelay = 0.2f;
 
         [Header("圆环动画时长")]
-        public float ringDuration = 0.8f;
+        public float ringDuration = 1.3f;
 
         [Header("圆环之间的间隔")]
-        public float ringStagger = 0.1f;
+        public float ringStagger = 0.16f;
 
         IEnumerator Start()
         {
