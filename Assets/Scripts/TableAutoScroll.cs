@@ -1,13 +1,11 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Daima
 {
     /// <summary>
     /// 表格自动滚动（用于订单明细）。
-    /// 匀速向下滚动，到底停留片刻后回到顶部继续；用户拖动/滚轮/正在编辑单元格时自动暂停，
-    /// 停止操作 2.5 秒后恢复。
+    /// 匀速向下滚动，到底停留片刻后回到顶部继续；用户拖动/滚轮时暂停。
     /// </summary>
     public class TableAutoScroll : MonoBehaviour
     {
@@ -23,12 +21,8 @@ namespace Daima
         [Header("回到顶部后停留秒数")]
         public float topPause = 0.6f;
 
-        [Header("用户停止操作后恢复滚动的秒数")]
-        public float resumeDelay = 2.5f;
-
         Canvas canvas;
         float wait;
-        float idle;
         bool atBottom;
 
         void Awake()
@@ -47,14 +41,7 @@ namespace Daima
 
             if (UserBusy())
             {
-                idle = resumeDelay;
                 if (scrollRect.verticalNormalizedPosition > 0.01f) atBottom = false;
-                return;
-            }
-
-            if (idle > 0f)
-            {
-                idle -= Time.unscaledDeltaTime;
                 return;
             }
 
@@ -88,22 +75,9 @@ namespace Daima
 
         bool UserBusy()
         {
-            // 正在编辑某个单元格
-            var es = EventSystem.current;
-            if (es != null)
-            {
-                var selected = es.currentSelectedGameObject;
-                if (selected != null && selected.activeInHierarchy &&
-                    selected.transform.IsChildOf(scrollRect.content))
-                    return true;
-            }
-
-            // 鼠标在表格上按下拖动或滚轮
+            // 鼠标在表格上按下拖动或滚轮时让位给用户操作
             if (!PointerOverTable()) return false;
-            if (Input.GetMouseButton(0) || Mathf.Abs(Input.mouseScrollDelta.y) > 0.01f)
-                return true;
-
-            return false;
+            return Input.GetMouseButton(0) || Mathf.Abs(Input.mouseScrollDelta.y) > 0.01f;
         }
 
         bool PointerOverTable()
@@ -113,6 +87,61 @@ namespace Daima
                 : null;
             return RectTransformUtility.RectangleContainsScreenPoint(
                 scrollRect.viewport, Input.mousePosition, camera);
+        }
+    }
+
+    /// <summary>
+    /// 兜底：场景里的订单表格如果因为历史原因没挂上滚动组件，运行时自动补一个，保证表格始终自动滚动。
+    /// </summary>
+    public static class TableAutoScrollBootstrap
+    {
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void Ensure()
+        {
+            ScrollRect scroll = FindTableScroll();
+            if (scroll == null) return;
+
+            TableAutoScroll existing = scroll.GetComponent<TableAutoScroll>();
+            if (existing != null)
+            {
+                existing.enabled = true;
+                return;
+            }
+
+            scroll.gameObject.AddComponent<TableAutoScroll>();
+        }
+
+        static ScrollRect FindTableScroll()
+        {
+            Transform image1 = FindDeep("Image1", "Canvas left");
+            if (image1 != null)
+            {
+                ScrollRect scroll = image1.GetComponentInChildren<ScrollRect>(true);
+                if (scroll != null) return scroll;
+            }
+
+            Transform order = FindDeep("订单明细", null);
+            if (order != null) return order.GetComponentInChildren<ScrollRect>(true);
+
+            return null;
+        }
+
+        static Transform FindDeep(string name, string ancestor)
+        {
+            Transform[] all = Object.FindObjectsOfType<Transform>(true);
+            foreach (Transform t in all)
+            {
+                if (t.name != name) continue;
+                if (ancestor == null) return t;
+
+                Transform parent = t.parent;
+                while (parent != null)
+                {
+                    if (parent.name == ancestor) return t;
+                    parent = parent.parent;
+                }
+            }
+            return null;
         }
     }
 }
