@@ -301,30 +301,50 @@ namespace Daima
 
         static void BuildStockChart(Transform root, ChartHoverTooltipView view)
         {
-            List<Image> tracks = CollectImages(root, "RingTrack");
-            tracks.Sort((a, b) => a.rectTransform.anchoredPosition.x.CompareTo(b.rectTransform.anchoredPosition.x));
+            // 可见的圆环是 RingArc（包括 RingArc1(1) 这类复制件），悬停挂在圆环上
+            List<Image> arcs = CollectImagesPrefix(root, "RingArc");
+            arcs.Sort((a, b) => CenterX(a.rectTransform).CompareTo(CenterX(b.rectTransform)));
 
             List<Text> values = CollectTexts(root, "RingValue");
-            values.Sort((a, b) => a.rectTransform.anchoredPosition.x.CompareTo(b.rectTransform.anchoredPosition.x));
+            values.Sort((a, b) => CenterX(a.rectTransform).CompareTo(CenterX(b.rectTransform)));
 
             List<Text> labels = CollectTexts(root, "RingLabel");
-            labels.Sort((a, b) => a.rectTransform.anchoredPosition.x.CompareTo(b.rectTransform.anchoredPosition.x));
+            labels.Sort((a, b) => CenterX(a.rectTransform).CompareTo(CenterX(b.rectTransform)));
 
             int total = 0;
             for (int i = 0; i < values.Count; i++)
                 if (values[i] != null) total += ParseInt(values[i].text);
 
-            for (int i = 0; i < tracks.Count; i++)
+            // 没有 RingArc 时退回 RingTrack，保证旧布局也能用
+            if (arcs.Count == 0)
             {
-                string label = i < labels.Count && labels[i] != null ? labels[i].text : "库存";
-                int value = i < values.Count && values[i] != null ? ParseInt(values[i].text) : 0;
-                float share = total > 0 ? value * 100f / total : 0f;
-
-                string content = label + "\n库存 " + value +
-                                 "\n占总库存 " + share.ToString("0.0", CultureInfo.InvariantCulture) +
-                                 "%\n当前总库存 " + total;
-                AddHover(tracks[i], view, content);
+                List<Image> tracks = CollectImagesPrefix(root, "RingTrack");
+                for (int i = 0; i < tracks.Count; i++)
+                {
+                    int vi = i < values.Count ? i : -1;
+                    AddHover(tracks[i], view, StockContent(labels, values, vi, total));
+                }
+                return;
             }
+
+            for (int i = 0; i < arcs.Count; i++)
+            {
+                int vi = NearestIndex(values, CenterX(arcs[i].rectTransform));
+                AddHover(arcs[i], view, StockContent(labels, values, vi, total));
+            }
+        }
+
+        static string StockContent(List<Text> labels, List<Text> values, int index, int total)
+        {
+            string label = index >= 0 && index < labels.Count && labels[index] != null
+                ? labels[index].text : "库存";
+            int value = index >= 0 && index < values.Count && values[index] != null
+                ? ParseInt(values[index].text) : 0;
+            float share = total > 0 ? value * 100f / total : 0f;
+
+            return label + "\n库存 " + value +
+                   "\n占总库存 " + share.ToString("0.0", CultureInfo.InvariantCulture) +
+                   "%\n当前总库存 " + total;
         }
 
         // ------------------------------------------------------------------ 工具方法
@@ -352,6 +372,43 @@ namespace Daima
                     result.Add(image);
             }
             return result;
+        }
+
+        static List<Image> CollectImagesPrefix(Transform root, string prefix)
+        {
+            var result = new List<Image>();
+            Image[] images = root.GetComponentsInChildren<Image>(true);
+
+            foreach (Image image in images)
+            {
+                if (image != null && image.gameObject.name.StartsWith(prefix))
+                    result.Add(image);
+            }
+            return result;
+        }
+
+        static float CenterX(RectTransform rect)
+        {
+            return rect.anchoredPosition.x + rect.rect.center.x;
+        }
+
+        static int NearestIndex(List<Text> texts, float centerX)
+        {
+            int best = -1;
+            float bestDistance = float.MaxValue;
+
+            for (int i = 0; i < texts.Count; i++)
+            {
+                if (texts[i] == null) continue;
+
+                float distance = Mathf.Abs(CenterX(texts[i].rectTransform) - centerX);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    best = i;
+                }
+            }
+            return best;
         }
 
         static List<Text> CollectTexts(Transform root, string name)

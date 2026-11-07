@@ -62,6 +62,17 @@ namespace Daima.EditorTools
                 var root = new GameObject("__DashboardTables");
                 Undo.RegisterCreatedObjectUndo(root, "创建表格控制器");
                 controller = root.AddComponent<DashboardTablesController>();
+
+                // 控制器脚本在 Assets/Editor 里，Unity 不允许挂到场景对象上；清理临时对象，避免留下空物体
+                if (controller == null)
+                {
+                    Undo.DestroyObjectImmediate(root);
+                    if (interactive)
+                        EditorUtility.DisplayDialog("无法创建控制器",
+                            "DashboardTablesController 位于 Assets/Editor，无法挂到场景对象上。\n" +
+                            "请先把它移到 Assets/Scripts 再生成。", "知道了");
+                    return false;
+                }
             }
 
             Undo.RecordObject(controller, "生成订单表格与图表");

@@ -6,21 +6,12 @@ using UnityEngine.UI;
 namespace Daima
 {
     /// <summary>
-    /// Play 时给两个渐变图表做入场动画：
-    /// - Image3 订单负荷与产能匹配：柱子从底部依次长出
-    /// - Image4 AGV 配送任务进度：进度条从左往右依次展开
-    /// 不修改场景，运行时自动查找场景里已经烘焙好的图表对象。
+    /// 图表出场动画：
+    /// - 柱状图柱子从底部生长
+    /// - 进度条从左往右展开
+    /// - 圆环从 0 充能
+    /// 由 TilePanelSwitcher 在初始页面和切页时调用，只对传入页面下的元素播放。
     /// </summary>
-    public static class ChartEntranceBootstrap
-    {
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        static void Create()
-        {
-            var go = new GameObject("__ChartEntranceAnimator");
-            go.AddComponent<ChartEntranceAnimator>();
-        }
-    }
-
     public class ChartEntranceAnimator : MonoBehaviour
     {
         [Header("单根柱子/进度条的动画时长")]
@@ -38,17 +29,78 @@ namespace Daima
         [Header("圆环之间的间隔")]
         public float ringStagger = 0.16f;
 
-        IEnumerator Start()
+        [Header("横向条的生长时长/间隔（安环能耗页）")]
+        public float flatBarDuration = 0.65f;
+        public float flatBarStagger = 0.05f;
+
+        [Header("热力格弹出时长/间隔（安环能耗页）")]
+        public float cellDuration = 0.35f;
+        public float cellStagger = 0.012f;
+
+        [Header("折线逐段绘制间隔（安环能耗页）")]
+        public float segmentStagger = 0.015f;
+
+        // 第一次播放时记录原始尺寸/位置/透明度，之后切页回来仍然使用同一套原始值
+        readonly Dictionary<RectTransform, Vector2> barSize = new Dictionary<RectTransform, Vector2>();
+        readonly Dictionary<RectTransform, Vector2> barPosition = new Dictionary<RectTransform, Vector2>();
+        readonly Dictionary<RectTransform, float> barAlpha = new Dictionary<RectTransform, float>();
+        readonly Dictionary<RectTransform, Vector2> fillSize = new Dictionary<RectTransform, Vector2>();
+        readonly Dictionary<RectTransform, float> fillAlpha = new Dictionary<RectTransform, float>();
+        readonly Dictionary<Image, float> ringFill = new Dictionary<Image, float>();
+        readonly Dictionary<Image, float> ringAlpha = new Dictionary<Image, float>();
+        readonly Dictionary<Image, float> trackAlpha = new Dictionary<Image, float>();
+
+        // 安环能耗页（Canvas main5）专用元素
+        readonly Dictionary<RectTransform, Vector2> flatSize = new Dictionary<RectTransform, Vector2>();
+        readonly Dictionary<RectTransform, Vector2> flatPos = new Dictionary<RectTransform, Vector2>();
+        readonly Dictionary<RectTransform, float> flatAlpha = new Dictionary<RectTransform, float>();
+        readonly Dictionary<RectTransform, Vector3> cellScale = new Dictionary<RectTransform, Vector3>();
+        readonly Dictionary<RectTransform, float> cellAlpha = new Dictionary<RectTransform, float>();
+        readonly Dictionary<RectTransform, float> segAlpha = new Dictionary<RectTransform, float>();
+
+        /// <summary>播放指定页面（Canvas mainN）的入场动画。</summary>
+        public static void PlayPage(GameObject page)
         {
-            Transform loadChart = FindChart("订单负荷与产能匹配", "Image3");
-            Transform routeChart = FindChart("AGV配送任务进度", "Image4");
-            Transform stockChart = FindChart("物料库存趋势", "Image5");
+            if (page == null) return;
 
-            if (loadChart != null) StartCoroutine(GrowBars(loadChart));
-            if (routeChart != null) StartCoroutine(SlideFills(routeChart));
-            if (stockChart != null) StartCoroutine(GrowRings(stockChart));
+            ChartEntranceAnimator host = Object.FindObjectOfType<ChartEntranceAnimator>();
+            if (host == null)
+            {
+                var go = new GameObject("__ChartEntranceAnimator");
+                host = go.AddComponent<ChartEntranceAnimator>();
+            }
 
-            yield return null;
+            host.Play(page.transform);
+        }
+
+        void Play(Transform page)
+        {
+            StopAllCoroutines();
+            StartCoroutine(GrowBars(page));
+            StartCoroutine(SlideFills(page));
+            StartCoroutine(GrowRings(page));
+
+            // 数据大屏（main2 / main4 / main5）：环形仪表充能、条形生长、热力格/散点弹出、折线逐段绘制
+            int pageIndex = PageIndexOf(page != null ? page.name : null);
+            if (pageIndex == 2 || pageIndex == 4 || pageIndex == 5)
+            {
+                StartCoroutine(ChargeEnergyRings(page));
+                StartCoroutine(GrowFlatBars(page));
+                StartCoroutine(PopElements(page, "cell", true, 0f));
+                StartCoroutine(DrawSegments(page));
+            }
+        }
+
+        /// <summary>从 "Canvas mainN" 取出页序号。</summary>
+        static int PageIndexOf(string objectName)
+        {
+            if (string.IsNullOrEmpty(objectName)) return -1;
+
+            string s = objectName.Replace(" ", string.Empty);
+            if (!s.StartsWith("Canvasmain")) return -1;
+
+            int index = -1;
+            return int.TryParse(s.Substring("Canvasmain".Length), out index) ? index : -1;
         }
 
         /// <summary>柱子从底部向上生长（轴心在左上角，所以同步调整 Y 位置保持底边不动）。</summary>
@@ -59,18 +111,31 @@ namespace Daima
             if (bars.Count == 0) yield break;
 
             int n = bars.Count;
-            Vector2[] origin = new Vector2[n];
             Vector2[] size = new Vector2[n];
+            Vector2[] origin = new Vector2[n];
+            float[] alpha = new float[n];
 
             for (int i = 0; i < n; i++)
             {
                 RectTransform rt = bars[i];
-                origin[i] = rt.anchoredPosition;
-                size[i] = rt.sizeDelta;
+                if (rt == null) continue;
+
+                Image image = rt.GetComponent<Image>();
+
+                if (!barSize.ContainsKey(rt))
+                {
+                    barSize[rt] = rt.sizeDelta;
+                    barPosition[rt] = rt.anchoredPosition;
+                    barAlpha[rt] = image != null ? image.color.a : 1f;
+                }
+
+                size[i] = barSize[rt];
+                origin[i] = barPosition[rt];
+                alpha[i] = barAlpha[rt];
 
                 rt.sizeDelta = new Vector2(size[i].x, 0f);
                 rt.anchoredPosition = new Vector2(origin[i].x, origin[i].y - size[i].y);
-                SetAlpha(rt.GetComponent<Image>(), 0f);
+                SetAlpha(image, 0f);
             }
 
             yield return new WaitForSeconds(startDelay);
@@ -91,7 +156,7 @@ namespace Daima
 
                     rt.sizeDelta = new Vector2(size[i].x, size[i].y * e);
                     rt.anchoredPosition = new Vector2(origin[i].x, origin[i].y - size[i].y * (1f - e));
-                    SetAlpha(rt.GetComponent<Image>(), e);
+                    SetAlpha(rt.GetComponent<Image>(), alpha[i] * e);
                 }
 
                 yield return null;
@@ -104,7 +169,7 @@ namespace Daima
 
                 rt.sizeDelta = size[i];
                 rt.anchoredPosition = origin[i];
-                SetAlpha(rt.GetComponent<Image>(), 1f);
+                SetAlpha(rt.GetComponent<Image>(), alpha[i]);
             }
         }
 
@@ -116,17 +181,27 @@ namespace Daima
             if (fills.Count == 0) yield break;
 
             int n = fills.Count;
-            Vector2[] origin = new Vector2[n];
             Vector2[] size = new Vector2[n];
+            float[] alpha = new float[n];
 
             for (int i = 0; i < n; i++)
             {
                 RectTransform rt = fills[i];
-                origin[i] = rt.anchoredPosition;
-                size[i] = rt.sizeDelta;
+                if (rt == null) continue;
+
+                Image image = rt.GetComponent<Image>();
+
+                if (!fillSize.ContainsKey(rt))
+                {
+                    fillSize[rt] = rt.sizeDelta;
+                    fillAlpha[rt] = image != null ? image.color.a : 1f;
+                }
+
+                size[i] = fillSize[rt];
+                alpha[i] = fillAlpha[rt];
 
                 rt.sizeDelta = new Vector2(0f, size[i].y);
-                SetAlpha(rt.GetComponent<Image>(), 0f);
+                SetAlpha(image, 0f);
             }
 
             yield return new WaitForSeconds(startDelay);
@@ -146,7 +221,7 @@ namespace Daima
                     float e = EaseOutCubic(t);
 
                     rt.sizeDelta = new Vector2(size[i].x * e, size[i].y);
-                    SetAlpha(rt.GetComponent<Image>(), e);
+                    SetAlpha(rt.GetComponent<Image>(), alpha[i] * e);
                 }
 
                 yield return null;
@@ -158,69 +233,107 @@ namespace Daima
                 if (rt == null) continue;
 
                 rt.sizeDelta = size[i];
-                SetAlpha(rt.GetComponent<Image>(), 1f);
+                SetAlpha(rt.GetComponent<Image>(), alpha[i]);
             }
         }
 
-        /// <summary>三个圆环依次从 0 充能到目标百分比，同时淡入。</summary>
+        /// <summary>
+        /// 圆环依次从 0 充能到目标百分比，同时淡入。
+        /// 按名字前缀匹配，RingArc1(1) 这类复制件会和原环一起动；按中心位置分组，同一圆环的复制件同步。
+        /// </summary>
         IEnumerator GrowRings(Transform root)
         {
-            List<RectTransform> arcs = Collect(root, "RingArc");
-            List<RectTransform> tracks = Collect(root, "RingTrack");
-            arcs.Sort((a, b) => a.anchoredPosition.x.CompareTo(b.anchoredPosition.x));
-            tracks.Sort((a, b) => a.anchoredPosition.x.CompareTo(b.anchoredPosition.x));
+            List<RectTransform> arcs = CollectPrefix(root, "RingArc");
+            List<RectTransform> tracks = CollectPrefix(root, "RingTrack");
             if (arcs.Count == 0) yield break;
+
+            arcs.Sort((a, b) => CenterX(a).CompareTo(CenterX(b)));
 
             int n = arcs.Count;
             float[] target = new float[n];
-            float[] arcAlpha = new float[n];
-            float[] trackAlpha = new float[tracks.Count];
+            float[] alpha = new float[n];
+            int[] group = new int[n];
+            int groupCount = -1;
+            float lastCenter = float.MinValue;
 
             for (int i = 0; i < n; i++)
             {
-                Image arc = arcs[i].GetComponent<Image>();
+                RectTransform rt = arcs[i];
+                if (rt == null) continue;
+
+                Image arc = rt.GetComponent<Image>();
                 if (arc == null) continue;
 
-                target[i] = arc.fillAmount;
-                arcAlpha[i] = arc.color.a;
+                float center = CenterX(rt);
+                if (i == 0 || Mathf.Abs(center - lastCenter) > 0.5f)
+                {
+                    groupCount++;
+                    lastCenter = center;
+                }
+                group[i] = groupCount;
+
+                if (!ringFill.ContainsKey(arc))
+                {
+                    ringFill[arc] = arc.fillAmount;
+                    ringAlpha[arc] = arc.color.a;
+                }
+
+                target[i] = ringFill[arc];
+                alpha[i] = ringAlpha[arc];
                 arc.fillAmount = 0f;
                 SetAlpha(arc, 0f);
             }
 
+            float[] tracksAlpha = new float[tracks.Count];
             for (int i = 0; i < tracks.Count; i++)
             {
-                Image track = tracks[i].GetComponent<Image>();
+                RectTransform rt = tracks[i];
+                if (rt == null) continue;
+
+                Image track = rt.GetComponent<Image>();
                 if (track == null) continue;
 
-                trackAlpha[i] = track.color.a;
+                if (!trackAlpha.ContainsKey(track))
+                    trackAlpha[track] = track.color.a;
+
+                tracksAlpha[i] = trackAlpha[track];
                 SetAlpha(track, 0f);
             }
 
             yield return new WaitForSeconds(startDelay);
 
-            float total = ringDuration + ringStagger * (n - 1);
+            int groups = groupCount + 1;
+            float total = ringDuration + ringStagger * Mathf.Max(0, groups - 1);
             float elapsed = 0f;
+
             while (elapsed < total)
             {
                 elapsed += Time.deltaTime;
 
+                float globalE = EaseOutCubic(Mathf.Clamp01(elapsed / ringDuration));
+
                 for (int i = 0; i < n; i++)
                 {
-                    float t = Mathf.Clamp01((elapsed - ringStagger * i) / ringDuration);
+                    RectTransform rt = arcs[i];
+                    if (rt == null) continue;
+
+                    Image arc = rt.GetComponent<Image>();
+                    if (arc == null) continue;
+
+                    float t = Mathf.Clamp01((elapsed - ringStagger * group[i]) / ringDuration);
                     float e = EaseOutCubic(t);
 
-                    Image arc = arcs[i].GetComponent<Image>();
-                    if (arc != null)
-                    {
-                        arc.fillAmount = target[i] * e;
-                        SetAlpha(arc, arcAlpha[i] * e);
-                    }
+                    arc.fillAmount = target[i] * e;
+                    SetAlpha(arc, alpha[i] * e);
+                }
 
-                    if (i < tracks.Count)
-                    {
-                        Image track = tracks[i].GetComponent<Image>();
-                        if (track != null) SetAlpha(track, trackAlpha[i] * e);
-                    }
+                for (int i = 0; i < tracks.Count; i++)
+                {
+                    RectTransform rt = tracks[i];
+                    if (rt == null) continue;
+
+                    Image track = rt.GetComponent<Image>();
+                    if (track != null) SetAlpha(track, tracksAlpha[i] * globalE);
                 }
 
                 yield return null;
@@ -228,19 +341,386 @@ namespace Daima
 
             for (int i = 0; i < n; i++)
             {
-                Image arc = arcs[i].GetComponent<Image>();
+                RectTransform rt = arcs[i];
+                if (rt == null) continue;
+
+                Image arc = rt.GetComponent<Image>();
                 if (arc != null)
                 {
                     arc.fillAmount = target[i];
-                    SetAlpha(arc, arcAlpha[i]);
-                }
-
-                if (i < tracks.Count)
-                {
-                    Image track = tracks[i].GetComponent<Image>();
-                    if (track != null) SetAlpha(track, trackAlpha[i]);
+                    SetAlpha(arc, alpha[i]);
                 }
             }
+
+            for (int i = 0; i < tracks.Count; i++)
+            {
+                RectTransform rt = tracks[i];
+                if (rt == null) continue;
+
+                Image track = rt.GetComponent<Image>();
+                if (track != null) SetAlpha(track, tracksAlpha[i]);
+            }
+        }
+
+        /// <summary>环形仪表从 0 充能（gFg 为 Filled/Radial360），底环 gBg 同步淡入。</summary>
+        IEnumerator ChargeEnergyRings(Transform root)
+        {
+            List<RectTransform> arcs = CollectPrefix(root, "ring");
+            arcs.AddRange(Collect(root, "gFg"));
+            List<RectTransform> tracks = Collect(root, "gBg");
+
+            arcs.RemoveAll(rt => !IsFilledArc(rt != null ? rt.GetComponent<Image>() : null));
+            if (arcs.Count == 0 && tracks.Count == 0) yield break;
+
+            arcs.Sort((a, b) => CenterX(a).CompareTo(CenterX(b)));
+
+            float[] target = new float[arcs.Count];
+            float[] alpha = new float[arcs.Count];
+
+            for (int i = 0; i < arcs.Count; i++)
+            {
+                RectTransform rt = arcs[i];
+                if (rt == null) continue;
+
+                Image arc = rt.GetComponent<Image>();
+                if (arc == null) continue;
+
+                if (!ringFill.ContainsKey(arc))
+                {
+                    ringFill[arc] = arc.fillAmount;
+                    ringAlpha[arc] = arc.color.a;
+                }
+
+                target[i] = ringFill[arc];
+                alpha[i] = ringAlpha[arc];
+                arc.fillAmount = 0f;
+                SetAlpha(arc, 0f);
+            }
+
+            float[] tracksAlpha = new float[tracks.Count];
+            for (int i = 0; i < tracks.Count; i++)
+            {
+                RectTransform rt = tracks[i];
+                if (rt == null) continue;
+
+                Image track = rt.GetComponent<Image>();
+                if (track == null) continue;
+
+                if (!trackAlpha.ContainsKey(track))
+                    trackAlpha[track] = track.color.a;
+
+                tracksAlpha[i] = trackAlpha[track];
+                SetAlpha(track, 0f);
+            }
+
+            yield return new WaitForSeconds(startDelay);
+
+            float total = ringDuration + ringStagger * Mathf.Max(0, arcs.Count - 1);
+            float elapsed = 0f;
+
+            while (elapsed < total)
+            {
+                elapsed += Time.deltaTime;
+                float globalE = EaseOutCubic(Mathf.Clamp01(elapsed / ringDuration));
+
+                for (int i = 0; i < arcs.Count; i++)
+                {
+                    RectTransform rt = arcs[i];
+                    if (rt == null) continue;
+
+                    Image arc = rt.GetComponent<Image>();
+                    if (arc == null) continue;
+
+                    float t = Mathf.Clamp01((elapsed - ringStagger * i) / ringDuration);
+                    float e = EaseOutCubic(t);
+
+                    arc.fillAmount = target[i] * e;
+                    SetAlpha(arc, alpha[i] * e);
+                }
+
+                for (int i = 0; i < tracks.Count; i++)
+                {
+                    RectTransform rt = tracks[i];
+                    if (rt == null) continue;
+
+                    Image track = rt.GetComponent<Image>();
+                    if (track != null) SetAlpha(track, tracksAlpha[i] * globalE);
+                }
+
+                yield return null;
+            }
+
+            for (int i = 0; i < arcs.Count; i++)
+            {
+                RectTransform rt = arcs[i];
+                if (rt == null) continue;
+
+                Image arc = rt.GetComponent<Image>();
+                if (arc == null) continue;
+
+                arc.fillAmount = target[i];
+                SetAlpha(arc, alpha[i]);
+            }
+
+            for (int i = 0; i < tracks.Count; i++)
+            {
+                RectTransform rt = tracks[i];
+                if (rt == null) continue;
+
+                Image track = rt.GetComponent<Image>();
+                if (track != null) SetAlpha(track, tracksAlpha[i]);
+            }
+        }
+
+        /// <summary>条形（bar / fn / rw / sc / kpiBar）沿主轴生长，按从上到下、从左到右依次展开。</summary>
+        IEnumerator GrowFlatBars(Transform root)
+        {
+            var all = new List<RectTransform>();
+            foreach (string prefix in FlatBarPrefixes)
+                all.AddRange(CollectPrefix(root, prefix));
+
+            if (all.Count == 0) yield break;
+
+            SortByPosition(all);
+
+            int n = all.Count;
+            Vector2[] size = new Vector2[n];
+            Vector2[] origin = new Vector2[n];
+            float[] alpha = new float[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                RectTransform rt = all[i];
+                if (rt == null) continue;
+
+                Image image = rt.GetComponent<Image>();
+                if (image == null) continue;
+
+                if (!flatSize.ContainsKey(rt))
+                {
+                    flatSize[rt] = rt.sizeDelta;
+                    flatPos[rt] = rt.anchoredPosition;
+                    flatAlpha[rt] = image.color.a;
+                }
+
+                size[i] = flatSize[rt];
+                origin[i] = flatPos[rt];
+                alpha[i] = flatAlpha[rt];
+
+                rt.sizeDelta = IsVertical(size[i]) ? new Vector2(size[i].x, 0f) : new Vector2(0f, size[i].y);
+                SetAlpha(image, 0f);
+            }
+
+            yield return new WaitForSeconds(startDelay);
+
+            float total = flatBarDuration + flatBarStagger * Mathf.Max(0, n - 1);
+            float elapsed = 0f;
+
+            while (elapsed < total)
+            {
+                elapsed += Time.deltaTime;
+
+                for (int i = 0; i < n; i++)
+                {
+                    RectTransform rt = all[i];
+                    if (rt == null) continue;
+
+                    float t = Mathf.Clamp01((elapsed - flatBarStagger * i) / flatBarDuration);
+                    float e = EaseOutCubic(t);
+
+                    if (IsVertical(size[i]))
+                    {
+                        rt.sizeDelta = new Vector2(size[i].x, size[i].y * e);
+                        rt.anchoredPosition = new Vector2(origin[i].x, origin[i].y - rt.pivot.y * size[i].y * (1f - e));
+                    }
+                    else
+                    {
+                        rt.sizeDelta = new Vector2(size[i].x * e, size[i].y);
+                        rt.anchoredPosition = new Vector2(origin[i].x - rt.pivot.x * size[i].x * (1f - e), origin[i].y);
+                    }
+
+                    SetAlpha(rt.GetComponent<Image>(), alpha[i] * e);
+                }
+
+                yield return null;
+            }
+
+            for (int i = 0; i < n; i++)
+            {
+                RectTransform rt = all[i];
+                if (rt == null) continue;
+
+                rt.sizeDelta = size[i];
+                rt.anchoredPosition = origin[i];
+                SetAlpha(rt.GetComponent<Image>(), alpha[i]);
+            }
+        }
+
+        /// <summary>格子/散点逐个弹出（缩放 + 淡入）。rowMajor=true 按行优先，否则按 X 从左到右。</summary>
+        IEnumerator PopElements(Transform root, string prefix, bool rowMajor, float extraDelay)
+        {
+            List<RectTransform> cells = CollectPrefix(root, prefix);
+            if (cells.Count == 0) yield break;
+
+            if (rowMajor) SortByPosition(cells);
+            else cells.Sort((a, b) => a.anchoredPosition.x.CompareTo(b.anchoredPosition.x));
+
+            int n = cells.Count;
+            Vector3[] scale = new Vector3[n];
+            float[] alpha = new float[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                RectTransform rt = cells[i];
+                if (rt == null) continue;
+
+                Image image = rt.GetComponent<Image>();
+
+                if (!cellScale.ContainsKey(rt))
+                {
+                    cellScale[rt] = rt.localScale;
+                    cellAlpha[rt] = image != null ? image.color.a : 1f;
+                }
+
+                scale[i] = cellScale[rt];
+                alpha[i] = cellAlpha[rt];
+
+                rt.localScale = Vector3.zero;
+                SetAlpha(image, 0f);
+            }
+
+            yield return new WaitForSeconds(startDelay + extraDelay);
+
+            float total = cellDuration + cellStagger * Mathf.Max(0, n - 1);
+            float elapsed = 0f;
+
+            while (elapsed < total)
+            {
+                elapsed += Time.deltaTime;
+
+                for (int i = 0; i < n; i++)
+                {
+                    RectTransform rt = cells[i];
+                    if (rt == null) continue;
+
+                    float t = Mathf.Clamp01((elapsed - cellStagger * i) / cellDuration);
+                    float e = EaseOutCubic(t);
+
+                    rt.localScale = new Vector3(scale[i].x * e, scale[i].y * e, scale[i].z);
+                    SetAlpha(rt.GetComponent<Image>(), alpha[i] * e);
+                }
+
+                yield return null;
+            }
+
+            for (int i = 0; i < n; i++)
+            {
+                RectTransform rt = cells[i];
+                if (rt == null) continue;
+
+                rt.localScale = scale[i];
+                SetAlpha(rt.GetComponent<Image>(), alpha[i]);
+            }
+        }
+
+        /// <summary>折线的分段从左往右依次淡入，形成绘制效果。</summary>
+        IEnumerator DrawSegments(Transform root)
+        {
+            List<RectTransform> segs = CollectPrefix(root, "seg");
+            if (segs.Count == 0) yield break;
+
+            segs.Sort((a, b) => a.anchoredPosition.x.CompareTo(b.anchoredPosition.x));
+
+            int n = segs.Count;
+            float[] alpha = new float[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                RectTransform rt = segs[i];
+                if (rt == null) continue;
+
+                Image image = rt.GetComponent<Image>();
+
+                if (!segAlpha.ContainsKey(rt))
+                    segAlpha[rt] = image != null ? image.color.a : 1f;
+
+                alpha[i] = segAlpha[rt];
+                SetAlpha(image, 0f);
+            }
+
+            yield return new WaitForSeconds(startDelay);
+
+            float total = 0.25f + segmentStagger * Mathf.Max(0, n - 1);
+            float elapsed = 0f;
+
+            while (elapsed < total)
+            {
+                elapsed += Time.deltaTime;
+
+                for (int i = 0; i < n; i++)
+                {
+                    RectTransform rt = segs[i];
+                    if (rt == null) continue;
+
+                    float e = EaseOutCubic(Mathf.Clamp01((elapsed - segmentStagger * i) / 0.25f));
+                    SetAlpha(rt.GetComponent<Image>(), alpha[i] * e);
+                }
+
+                yield return null;
+            }
+
+            for (int i = 0; i < n; i++)
+            {
+                RectTransform rt = segs[i];
+                if (rt == null) continue;
+
+                SetAlpha(rt.GetComponent<Image>(), alpha[i]);
+            }
+        }
+
+        /// <summary>需要做生长动画的条形元素名前缀。</summary>
+        static readonly string[] FlatBarPrefixes = { "bar", "fn", "rw", "sc", "kpiBar", "span" };
+
+        static bool IsVertical(Vector2 size)
+        {
+            return size.y > size.x;
+        }
+
+        static bool IsFilledArc(Image image)
+        {
+            return image != null && image.type == Image.Type.Filled;
+        }
+
+        /// <summary>按显示顺序排序：先上后下，同一行先左后右。</summary>
+        static void SortByPosition(List<RectTransform> list)
+        {
+            list.Sort((a, b) =>
+            {
+                if (a == null || b == null) return 0;
+
+                float dy = a.anchoredPosition.y - b.anchoredPosition.y;
+                if (Mathf.Abs(dy) > 0.5f) return dy > 0f ? -1 : 1;
+
+                return a.anchoredPosition.x.CompareTo(b.anchoredPosition.x);
+            });
+        }
+
+        static List<RectTransform> CollectPrefix(Transform root, string prefix)
+        {
+            var result = new List<RectTransform>();
+            Image[] images = root.GetComponentsInChildren<Image>(true);
+
+            foreach (Image image in images)
+            {
+                if (image != null && image.gameObject.name.StartsWith(prefix))
+                    result.Add(image.rectTransform);
+            }
+            return result;
+        }
+
+        static float CenterX(RectTransform rect)
+        {
+            return rect.anchoredPosition.x + rect.rect.center.x;
         }
 
         static List<RectTransform> Collect(Transform root, string objectName)
@@ -250,7 +730,7 @@ namespace Daima
 
             foreach (Image image in images)
             {
-                if (image.gameObject.name == objectName)
+                if (image != null && image.gameObject.name == objectName)
                     result.Add(image.rectTransform);
             }
 
@@ -270,25 +750,6 @@ namespace Daima
         {
             float inv = 1f - t;
             return 1f - inv * inv * inv;
-        }
-
-        static Transform FindChart(string title, string panelName)
-        {
-            Transform chart = FindDeep(title);
-            if (chart != null) return chart;
-
-            // 找不到标题节点时退回到 Image3 / Image4 面板，仍然能按子物体名字找到 Bar / Fill
-            return FindDeep(panelName);
-        }
-
-        static Transform FindDeep(string name)
-        {
-            Transform[] all = Object.FindObjectsOfType<Transform>(true);
-            foreach (Transform t in all)
-            {
-                if (t.name == name) return t;
-            }
-            return null;
         }
     }
 }

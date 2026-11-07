@@ -67,22 +67,9 @@ namespace Daima.EditorTools
                 return;
             }
 
-            if (DashboardTablesMenu.HasGeneratedTables()) return;
-
-            // 只在包含大屏 Canvas 的场景里自动生成
-            if (DashboardTablesMenu.FindRect("Image1", "Canvas left") == null ||
-                DashboardTablesMenu.FindRect("Image2", "Canvas left") == null ||
-                DashboardTablesMenu.FindRect("Image3", "Canvas right") == null ||
-                DashboardTablesMenu.FindRect("Image4", "Canvas right") == null ||
-                DashboardTablesMenu.FindRect("Image5", "Canvas right") == null)
-                return;
-
-            if (!DashboardTablesMenu.GenerateTables(false)) return;
-
-            EditorSceneManager.MarkSceneDirty(scene);
-
-            Debug.Log("[DashboardTables] 已自动生成『Image1 订单表格 + Image2~5 四个图表』（编辑器里可见）。" +
-                      "确认无误后按 Ctrl+S 保存场景；如果 Scene 视图看不到，选中 Canvas left / Canvas right 按 F 框选，或切到 2D 视图。");
+            // 控制器脚本位于 Assets/Editor，属于编辑器程序集，无法自动挂载到场景对象上。
+            // 场景内容已经是烘焙好的静态内容，不再自动生成，避免每次打开场景都留下空的 __DashboardTables。
+            return;
         }
 
         /// <summary>
