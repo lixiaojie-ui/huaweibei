@@ -60,30 +60,48 @@
     <Analyzer Include="D:\Program Files\2022.3.62f3c1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\orderdata.cs" />
-    <Compile Include="Assets\OrderRow.cs" />
-    <Compile Include="Assets\run.cs" />
-    <Compile Include="Assets\post.cs" />
-    <Compile Include="Assets\AutoScrollTable.cs" />
-    <Compile Include="Assets\OrderTableView.cs" />
-    <Compile Include="Assets\TableLoad.cs" />
+    <Compile Include="Assets\Scripts\TechBackground.cs" />
+    <Compile Include="Assets\Scripts\CameraViewSwitcher.cs" />
+    <Compile Include="Assets\Scripts\生产\SubTabTextHighlight.cs" />
+    <Compile Include="Assets\Scripts\ChartHoverTooltipView.cs" />
+    <Compile Include="Assets\Scripts\ChartHoverTooltipItem.cs" />
+    <Compile Include="Assets\Scripts\MouseCameraController.cs" />
+    <Compile Include="Assets\Scripts\生产\OverlayRaycastCleanup.cs" />
+    <Compile Include="Assets\Scripts\FloatingButtonDiagnostics.cs" />
+    <Compile Include="Assets\Scripts\TilePanelSwitcher.cs" />
+    <Compile Include="Assets\Scripts\CameraSkyboxOverride.cs" />
+    <Compile Include="Assets\Scripts\生产\FloatingBillboard.cs" />
+    <Compile Include="Assets\Scripts\ChartEntranceAnimator.cs" />
+    <Compile Include="Assets\Scripts\生产\ToggleInfoPanel.cs" />
+    <Compile Include="Assets\Scripts\TileButtonImageToggle.cs" />
+    <Compile Include="Assets\Scripts\TableAutoScroll.cs" />
+    <Compile Include="Assets\DarkGroundDemo\Scripts\DemoCameraRig.cs" />
+    <Compile Include="Assets\DarkGroundDemo\Scripts\DemoMarkerPulse.cs" />
+    <Compile Include="Assets\DarkGroundDemo\Scripts\DarkGroundDemoBootstrap.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
+    <None Include="Assets\Resources\TechBackground\TechGrid.shader" />
+    <None Include="Assets\DarkGroundDemo\Resources\Shaders\HoloGrid.shader" />
+    <None Include="Assets\Resources\TechBackground\TechParticle.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
+    <None Include="Assets\DarkGroundDemo\Resources\Shaders\ParticleAdditive.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface.shader" />
     <None Include="Assets\TextMesh Pro\Sprites\EmojiOne Attribution.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Custom-Atlas.shader" />
+    <None Include="Assets\DarkGroundDemo\Resources\Shaders\LightBeam.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile SSD.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
+    <None Include="Assets\Resources\TechBackground\TechSkybox.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />
+    <None Include="Assets\Resources\TechBackground\TechGround.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Masking.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Mobile.shader" />
