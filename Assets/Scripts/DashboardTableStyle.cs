@@ -53,7 +53,7 @@ namespace Daima
 
         // ---- 深蓝玻璃主题（与背景同色系，浅色文字）----
         // 面板底：深蓝半透明，贴近背景色，不再发白
-        public static readonly Color PanelFill = new Color(0.055f, 0.180f, 0.300f, 0.62f);
+        public static readonly Color PanelFill = new Color(0.055f, 0.180f, 0.300f, 0.23921569f);
         // 青色描边
         public static readonly Color PanelEdge = new Color(0.25f, 0.75f, 0.95f, 0.75f);
         // 顶部 1px 高光线
@@ -83,7 +83,8 @@ namespace Daima
                 value.Contains("离线") || value.Contains("故障"))
                 return Danger;
 
-            if (value.Contains("待生产") || value.Contains("充电") ||
+            if (value.Contains("待生产") ||
+                value.Contains("充电") ||
                 value.Contains("饱和") || value.Contains("滞后") || value.Contains("避让"))
                 return Warn;
 
