@@ -76,6 +76,14 @@ namespace Daima
         void Play(Transform page)
         {
             StopAllCoroutines();
+            StartCoroutine(PlayRoutine(page));
+        }
+
+        /// <summary>延后一帧再开始：main1 右侧图表是运行时生成的，等它们构建完成后再收集元素。</summary>
+        IEnumerator PlayRoutine(Transform page)
+        {
+            yield return null;
+
             StartCoroutine(GrowBars(page));
             StartCoroutine(SlideFills(page));
             StartCoroutine(GrowRings(page));
@@ -88,6 +96,14 @@ namespace Daima
                 StartCoroutine(GrowFlatBars(page));
                 StartCoroutine(PopElements(page, "cell", true, 0f));
                 StartCoroutine(DrawSegments(page));
+            }
+
+            // 主界面（main1）：右侧「产能缺口」堆叠柱逐节生长、产能基准线绘制、数值标签淡入
+            if (pageIndex == 1)
+            {
+                StartCoroutine(GrowFlatBars(page, new[] { "BarSeg" }));
+                StartCoroutine(DrawSegments(page, "CapacityLine"));
+                StartCoroutine(FadePrefixes(page, new[] { "BarValue", "GapValue", "GapTotal", "GapCap", "CapacityLabel" }, 0.35f));
             }
         }
 
@@ -475,8 +491,14 @@ namespace Daima
         /// <summary>条形（bar / fn / rw / sc / kpiBar）沿主轴生长，按从上到下、从左到右依次展开。</summary>
         IEnumerator GrowFlatBars(Transform root)
         {
+            return GrowFlatBars(root, FlatBarPrefixes);
+        }
+
+        /// <summary>指定前缀的条形沿主轴生长（主界面堆叠柱用 "BarSeg"）。</summary>
+        IEnumerator GrowFlatBars(Transform root, string[] prefixes)
+        {
             var all = new List<RectTransform>();
-            foreach (string prefix in FlatBarPrefixes)
+            foreach (string prefix in prefixes)
                 all.AddRange(CollectPrefix(root, prefix));
 
             if (all.Count == 0) yield break;
@@ -624,9 +646,9 @@ namespace Daima
         }
 
         /// <summary>折线的分段从左往右依次淡入，形成绘制效果。</summary>
-        IEnumerator DrawSegments(Transform root)
+        IEnumerator DrawSegments(Transform root, string prefix = "seg")
         {
-            List<RectTransform> segs = CollectPrefix(root, "seg");
+            List<RectTransform> segs = CollectPrefix(root, prefix);
             if (segs.Count == 0) yield break;
 
             segs.Sort((a, b) => a.anchoredPosition.x.CompareTo(b.anchoredPosition.x));
@@ -678,6 +700,62 @@ namespace Daima
             }
         }
 
+        /// <summary>指定前缀的图片/文字依次淡入（只改透明度，不改缩放）。</summary>
+        IEnumerator FadePrefixes(Transform root, string[] prefixes, float extraDelay)
+        {
+            List<RectTransform> list = CollectPrefixGraphics(root, prefixes);
+            if (list.Count == 0) yield break;
+
+            SortByPosition(list);
+
+            int n = list.Count;
+            float[] alpha = new float[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                RectTransform rt = list[i];
+                if (rt == null) continue;
+
+                Graphic graphic = rt.GetComponent<Graphic>();
+                if (graphic == null) continue;
+
+                if (!segAlpha.ContainsKey(rt))
+                    segAlpha[rt] = graphic.color.a;
+
+                alpha[i] = segAlpha[rt];
+                SetGraphicAlpha(graphic, 0f);
+            }
+
+            yield return new WaitForSeconds(startDelay + extraDelay);
+
+            float total = 0.35f + segmentStagger * Mathf.Max(0, n - 1);
+            float elapsed = 0f;
+
+            while (elapsed < total)
+            {
+                elapsed += Time.deltaTime;
+
+                for (int i = 0; i < n; i++)
+                {
+                    RectTransform rt = list[i];
+                    if (rt == null) continue;
+
+                    float e = EaseOutCubic(Mathf.Clamp01((elapsed - segmentStagger * i) / 0.35f));
+                    SetGraphicAlpha(rt.GetComponent<Graphic>(), alpha[i] * e);
+                }
+
+                yield return null;
+            }
+
+            for (int i = 0; i < n; i++)
+            {
+                RectTransform rt = list[i];
+                if (rt == null) continue;
+
+                SetGraphicAlpha(rt.GetComponent<Graphic>(), alpha[i]);
+            }
+        }
+
         /// <summary>需要做生长动画的条形元素名前缀。</summary>
         static readonly string[] FlatBarPrefixes = { "bar", "fn", "rw", "sc", "kpiBar", "span" };
 
@@ -718,6 +796,28 @@ namespace Daima
             return result;
         }
 
+        static List<RectTransform> CollectPrefixGraphics(Transform root, string[] prefixes)
+        {
+            var result = new List<RectTransform>();
+            Graphic[] graphics = root.GetComponentsInChildren<Graphic>(true);
+
+            foreach (Graphic graphic in graphics)
+            {
+                if (graphic == null) continue;
+
+                string name = graphic.gameObject.name;
+                foreach (string prefix in prefixes)
+                {
+                    if (name.StartsWith(prefix))
+                    {
+                        result.Add(graphic.rectTransform);
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
+
         static float CenterX(RectTransform rect)
         {
             return rect.anchoredPosition.x + rect.rect.center.x;
@@ -744,6 +844,15 @@ namespace Daima
             Color c = image.color;
             c.a = alpha;
             image.color = c;
+        }
+
+        static void SetGraphicAlpha(Graphic graphic, float alpha)
+        {
+            if (graphic == null) return;
+
+            Color c = graphic.color;
+            c.a = alpha;
+            graphic.color = c;
         }
 
         static float EaseOutCubic(float t)

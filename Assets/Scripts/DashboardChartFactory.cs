@@ -30,6 +30,12 @@ namespace Daima
         public static Sprite FillGrad { get { if (_fillGrad == null) _fillGrad = Resources.Load<Sprite>("bar_fill_grad"); return _fillGrad; } }
         public static readonly Color Orange = new Color(0.98f, 0.70f, 0.24f);      // #FAB33D
         public static readonly Color Green = new Color(0.26f, 0.87f, 0.62f);       // #42DE9E
+
+        // 产线负荷图：深蓝 / 中蓝 / 浅蓝三条产线 + 缺口红
+        public static readonly Color LoadLine1 = new Color(0.16f, 0.40f, 0.68f);  // #2A66AE 1号制粒线
+        public static readonly Color LoadLine2 = new Color(0.24f, 0.59f, 0.87f);  // #3D96DE 2号制粒线
+        public static readonly Color LoadLine3 = new Color(0.54f, 0.83f, 0.97f);  // #8AD4F7 3号膨化线
+        public static readonly Color LoadGap = new Color(1.00f, 0.56f, 0.48f);    // #FF8F7A 产能缺口
         public static readonly Color TextColor = new Color(0.905f, 0.950f, 0.980f);
         public static readonly Color Muted = new Color(0.620f, 0.740f, 0.850f);
         public static readonly Color GridColor = new Color(0.70f, 0.88f, 1f, 0.10f);
@@ -46,7 +52,8 @@ namespace Daima
             public string tip;
         }
 
-        public static RectTransform BuildAgvDispatch(RectTransform parent, List<AgvRowData> agvs, Font font)
+        public static RectTransform BuildAgvDispatch(RectTransform parent, List<AgvRowData> agvs, Font font,
+                                                     AgvKpiData kpi = null, string alertText = null)
         {
             RectTransform root = CreateRoot(parent, "__Table_AGV实时调度", 12f);
             float width = root.rect.width;
@@ -58,7 +65,8 @@ namespace Daima
             legendX = Legend(root, font, legendX, 4f, Orange, "充电中");
             Legend(root, font, legendX, 4f, Green, "待命");
 
-            HeaderKpi(root, font, "12 项", "执行中任务", 4f, 20);
+            string executing = kpi != null ? kpi.tasksExecuting.ToString() : "12";
+            HeaderKpi(root, font, executing + " 项", "执行中任务", 4f, 20);
 
             float diagramTop = 32f;
             float diagramHeight = height - diagramTop - 64f;
@@ -96,9 +104,15 @@ namespace Daima
             for (int i = 0; i < nodes.Length; i++)
                 DrawNode(root, font, center[i], nodes[i].name, tooltip, nodes[i].tip);
 
-            // 底部指标
-            string[] values = { "8/10", "76%", "98.6%", "78%" };
-            string[] labels = { "在线车辆", "平均电量", "配送准确率", "车辆利用率" };
+            // 底部指标：在线车辆 / 平均负载 / 配送达成率 / 车辆完好率
+            string[] values =
+            {
+                kpi != null ? kpi.running + "/" + kpi.total : "8/10",
+                kpi != null ? Pct(kpi.avgLoad) : "76%",
+                kpi != null ? Pct(kpi.taskExec) : "98.6%",
+                kpi != null ? Pct(kpi.onlineRate) : "78%"
+            };
+            string[] labels = { "在线车辆", "平均负载", "配送达成率", "车辆完好率" };
 
             float kpiY = height - 56f;
             float column = width / values.Length;
@@ -110,10 +124,20 @@ namespace Daima
                     i * column, kpiY + 19f, column, 12f, font);
             }
 
-            Txt(root, "Warning", "● AGV-07 低电量返航，预计 6 分钟恢复", 9, Orange, TextAnchor.MiddleLeft,
-                0f, height - 18f, width, 12f, font);
+            // AGV 异常提醒（接口 alerts 中 alert_type=AGV 的最新一条），红字常驻
+            if (!string.IsNullOrEmpty(alertText))
+            {
+                Txt(root, "Warning", "● " + alertText, 9,
+                    new Color(1f, 0.42f, 0.42f, 1f), TextAnchor.MiddleLeft,
+                    0f, height - 18f, width, 12f, font);
+            }
 
             return root;
+        }
+
+        static string Pct(float value)
+        {
+            return value.ToString("0.#") + "%";
         }
 
         static void DrawNode(RectTransform root, Font font, Vector2 center, string text,
@@ -164,108 +188,165 @@ namespace Daima
             image.raycastTarget = false;
         }
 
-        // ------------------------------------------------------------------ Image3：订单负荷与产能匹配
+        // ------------------------------------------------------------------ Image3：各产线日计划与产能缺口
 
-        public static RectTransform BuildLoadChart(RectTransform parent, List<LoadRowData> rows, Font font)
+        public static RectTransform BuildLoadChart(RectTransform parent, List<LoadRowData> rows, Font font,
+                                                   LoadKpiData kpi = null)
         {
-            RectTransform root = CreateRoot(parent, "__Table_订单负荷与产能匹配", 10f);
+            RectTransform root = CreateRoot(parent, "__Table_产线日计划与产能缺口", 10f);
             float width = root.rect.width;
             float height = root.rect.height;
             ChartTooltip tooltip = CreateTooltip(root, font);
 
-            float legendX = 0f;
-            legendX = Legend(root, font, legendX, 6f, Blue, "计划工时");
-            Legend(root, font, legendX, 6f, Orange, "可用产能");
+            float capacityToday = kpi != null && kpi.effectiveCapacity > 0f
+                ? kpi.effectiveCapacity
+                : (rows != null && rows.Count > 0 ? rows[0].capacity : 0f);
 
-            float maxValue = 600f;
+            float legendX = 0f;
+            legendX = Legend(root, font, legendX, 6f, LoadLine1, "1号制粒线");
+            legendX = Legend(root, font, legendX, 6f, LoadLine2, "2号制粒线");
+            legendX = Legend(root, font, legendX, 6f, LoadLine3, "3号膨化线");
+            LineLegend(root, font, legendX, 6f, Orange,
+                       "日有效产能 " + capacityToday.ToString("0.#") + " t");
+
+            if (rows == null || rows.Count == 0) return root;
 
             float totalPlan = 0f, totalCapacity = 0f;
+            int totalGap = 0;
             foreach (LoadRowData row in rows)
             {
-                totalPlan += row.planHours;
+                totalPlan += row.total;
                 totalCapacity += row.capacity;
+                totalGap += row.gap;
             }
-            float overall = totalCapacity > 0f ? totalPlan * 100f / totalCapacity : 0f;
+            float overall = kpi != null && kpi.loadRate > 0f
+                ? kpi.loadRate
+                : (totalCapacity > 0f ? totalPlan * 100f / totalCapacity : 0f);
             HeaderKpi(root, font, overall.ToString("0.0") + "%", "综合负荷率", 4f, 24);
 
-            float top = 46f, bottom = 24f, left = 30f, right = 38f;
+            Txt(root, "Unit", "吨/日", 8, Muted, TextAnchor.MiddleLeft,
+                0f, 30f, 44f, 12f, font);
+
+            float top = 50f, bottom = 26f, left = 32f, right = 44f;
             float plotWidth = width - left - right;
             float plotHeight = height - top - bottom;
+            const float maxValue = 240f;
 
-            for (int i = 0; i <= 3; i++)
+            for (int i = 0; i <= 4; i++)
             {
-                float value = i * 200f;
+                float value = i * 60f;
                 float y = top + plotHeight - value / maxValue * plotHeight;
                 Img(root, "Grid", GridColor, left, y, plotWidth, 1f);
-                Txt(root, "YLabel", ((int)value).ToString(), 10, Muted, TextAnchor.MiddleRight,
-                    0f, y - 8f, left - 6f, 16f, font);
+                Txt(root, "YLabel", ((int)value).ToString(), 9, Muted, TextAnchor.MiddleRight,
+                    0f, y - 7f, left - 6f, 14f, font);
             }
 
             int count = rows.Count;
             float slot = plotWidth / count;
-            float barWidth = Mathf.Min(24f, slot * 0.44f);
+            float barWidth = Mathf.Min(30f, slot * 0.46f);
 
             int peakIndex = 0;
             for (int i = 1; i < count; i++)
-                if (rows[i].planHours > rows[peakIndex].planHours) peakIndex = i;
+                if (rows[i].total > rows[peakIndex].total) peakIndex = i;
+
+            float yBottom = top + plotHeight;
 
             for (int i = 0; i < count; i++)
             {
                 LoadRowData row = rows[i];
-                float barHeight = Mathf.Max(1f, row.planHours / maxValue * plotHeight);
                 float x = left + slot * i + (slot - barWidth) * 0.5f;
-                float y = top + plotHeight - barHeight;
 
-                Image bar = Img(root, "Bar", i == peakIndex ? BlueLight : Blue,
-                                x, y, barWidth, barHeight, true);
-                // 竖向渐变圆头柱：顶部实色、底部渐隐（Simple 让渐变铺满整根柱）
-                if (RoundedBarGrad != null) { bar.sprite = RoundedBarGrad; bar.type = Image.Type.Simple; }
-                AttachTooltip(bar, tooltip,
-                    row.date + "\n计划工时 " + row.planHours + " h\n可用产能 " + row.capacity +
-                    " h\n负载率 " + row.RateText);
+                float h1 = row.line1 / maxValue * plotHeight;
+                float h2 = row.line2 / maxValue * plotHeight;
+                float h3 = row.line3 / maxValue * plotHeight;
 
-                Txt(root, "XLabel", row.date, 10, Muted, TextAnchor.MiddleCenter,
-                    left + slot * i, top + plotHeight + 6f, slot, 14f, font);
+                Img(root, "BarSeg", LoadLine1, x, yBottom - h1, barWidth, h1);
+                Img(root, "BarSeg", LoadLine2, x, yBottom - h1 - h2, barWidth, h2);
+                Img(root, "BarSeg", LoadLine3, x, yBottom - h1 - h2 - h3, barWidth, h3);
+
+                // 段间 1px 分隔线
+                Color segGap = new Color(0.03f, 0.09f, 0.15f, 0.85f);
+                Img(root, "SegGap", segGap, x, yBottom - h1 - 0.5f, barWidth, 1f);
+                Img(root, "SegGap", segGap, x, yBottom - h1 - h2 - 0.5f, barWidth, 1f);
+
+                BarValue(root, font, x, yBottom - 11f, barWidth, row.line1, Color.white);
+                BarValue(root, font, x, yBottom - h1 - 11f, barWidth, row.line2, Color.white);
+                BarValue(root, font, x, yBottom - h1 - h2 - 11f, barWidth, row.line3,
+                         new Color(0.04f, 0.18f, 0.28f));
+
+                // 超出日有效产能的部分用红色缺口帽标出
+                if (row.gap > 0)
+                {
+                    float capY = top + plotHeight - row.capacity / maxValue * plotHeight;
+                    float gapH = row.gap / maxValue * plotHeight;
+                    float stackTop = yBottom - h1 - h2 - h3;
+                    Img(root, "GapCap", new Color(LoadGap.r, LoadGap.g, LoadGap.b, 0.38f),
+                        x, stackTop, barWidth, gapH);
+                    Img(root, "GapTop", LoadGap, x, stackTop, barWidth, 1.5f);
+                    Img(root, "GapBase", LoadGap, x, capY, barWidth, 1f);
+                    Txt(root, "GapValue", "+" + row.gap, 8, LoadGap, TextAnchor.MiddleCenter,
+                        x, stackTop + gapH * 0.5f - 6f, barWidth, 12f, font, FontStyle.Bold);
+                }
+
+                // 整根柱的透明命中区，悬停显示三条线明细
+                float totalH = Mathf.Max(1f, h1 + h2 + h3);
+                Image hit = Img(root, "Bar", new Color(0f, 0f, 0f, 0f),
+                                x, yBottom - totalH, barWidth, totalH, true);
+                AttachTooltip(hit, tooltip,
+                    row.date + "\n1号 " + row.line1 + " · 2号 " + row.line2 + " · 3号 " + row.line3 + " t\n" +
+                    "合计 " + row.total + " t · 产能 " + row.capacity + " t\n" +
+                    "负荷 " + row.RateText + (row.gap > 0 ? " · 缺口 " + row.gap + " t" : ""));
+
+                Txt(root, "XLabel", row.date, 9, Muted, TextAnchor.MiddleCenter,
+                    left + slot * i, top + plotHeight + 5f, slot, 14f, font);
             }
 
-            // 峰值标注
-            LoadRowData peak = rows[peakIndex];
-            float peakBarHeight = peak.planHours / maxValue * plotHeight;
-            float peakCenterX = left + slot * peakIndex + slot * 0.5f;
-            Txt(root, "Peak", "峰值 " + peak.planHours + "h", 10, TextColor, TextAnchor.MiddleCenter,
-                peakCenterX - 50f, top + plotHeight - peakBarHeight - 18f, 100f, 14f, font);
-
-            // 可用产能线
-            float capacityValue = rows[0].capacity;
+            // 日有效产能橙色横线（today.capacity.effective_tons）
+            float capacityValue = capacityToday;
             float capacityY = top + plotHeight - capacityValue / maxValue * plotHeight;
             Img(root, "CapacityLine", Orange, left, capacityY, plotWidth, 1.5f);
-            Txt(root, "CapacityLabel", capacityValue + " h", 10, Orange, TextAnchor.MiddleLeft,
-                width - right + 4f, capacityY - 8f, right - 4f, 16f, font);
+            Txt(root, "CapacityLabel", capacityValue.ToString("0.#") + " t", 9, Orange, TextAnchor.MiddleLeft,
+                width - right + 4f, capacityY - 7f, right - 4f, 12f, font);
+            if (totalGap > 0)
+                Txt(root, "GapTotal", "缺口 " + totalGap + " t", 8, LoadGap, TextAnchor.MiddleLeft,
+                    width - right + 4f, capacityY + 3f, right - 4f, 12f, font);
+
+            // 给运行时悬停脚本提供峰值（单位：吨，来自 capacity_summary.peak_tons）
+            float peakValue = kpi != null && kpi.peak > 0f ? kpi.peak : rows[peakIndex].total;
+            Txt(root, "Peak", "峰值 " + peakValue.ToString("0.#") + " t", 9, Muted, TextAnchor.MiddleRight,
+                width - 290f, 26f, 120f, 13f, font);
 
             return root;
         }
 
-        // ------------------------------------------------------------------ Image4：AGV 配送任务进度
-
-        public static RectTransform BuildRouteChart(RectTransform parent, List<RouteRowData> rows, Font font)
+        static void BarValue(RectTransform root, Font font, float x, float y, float width,
+                             int value, Color color)
         {
-            RectTransform root = CreateRoot(parent, "__Table_AGV配送任务进度", 10f);
+            Txt(root, "BarValue", value.ToString(), 8, color, TextAnchor.MiddleCenter,
+                x, y - 6f, width, 12f, font, FontStyle.Bold);
+        }
+
+        // ------------------------------------------------------------------ Image4：各工序配方执行进度
+
+        public static RectTransform BuildRecipeChart(RectTransform parent, List<RecipeRowData> rows, Font font)
+        {
+            RectTransform root = CreateRoot(parent, "__Table_各工序配方执行进度", 10f);
             float width = root.rect.width;
             float height = root.rect.height;
             ChartTooltip tooltip = CreateTooltip(root, font);
 
             float legendX = 0f;
-            legendX = Legend(root, font, legendX, 6f, new Color(0.55f, 0.65f, 0.78f, 0.55f), "计划任务");
-            Legend(root, font, legendX, 6f, Blue, "已完成任务");
+            legendX = Legend(root, font, legendX, 6f, new Color(0.55f, 0.65f, 0.78f, 0.55f), "计划批次");
+            Legend(root, font, legendX, 6f, Blue, "已完成批次");
 
             int totalPlanned = 0, totalCompleted = 0;
-            foreach (RouteRowData row in rows)
+            foreach (RecipeRowData row in rows)
             {
                 totalPlanned += row.planned;
                 totalCompleted += row.completed;
             }
             float overall = totalPlanned > 0 ? totalCompleted * 100f / totalPlanned : 0f;
-            HeaderKpi(root, font, overall.ToString("0.0") + "%", "今日完成率", 4f, 24);
+            HeaderKpi(root, font, overall.ToString("0.0") + "%", "配方执行率", 4f, 24);
 
             float top = 42f;
             float rowHeight = (height - top - 6f) / Mathf.Max(1, rows.Count);
@@ -276,13 +357,14 @@ namespace Daima
 
             for (int i = 0; i < rows.Count; i++)
             {
-                RouteRowData row = rows[i];
+                RecipeRowData row = rows[i];
                 float y = top + i * rowHeight;
 
-                Txt(root, "Route", row.route, 13, TextColor, TextAnchor.MiddleLeft,
+                Txt(root, "Route", row.process, 13, TextColor, TextAnchor.MiddleLeft,
                     0f, y + 2f, labelWidth - 8f, 18f, font);
-                Txt(root, "Plan", "计划 " + row.planned + " 单", 9, Muted, TextAnchor.MiddleLeft,
-                    0f, y + 20f, labelWidth - 8f, 13f, font);
+                Txt(root, "Plan", "计划 " + row.planned + " 批 · 完成 " + row.completed + " 批",
+                    9, Muted, TextAnchor.MiddleLeft,
+                    0f, y + 20f, labelWidth - 4f, 13f, font);
 
                 float barY = y + 12f;
                 Image track = Img(root, "Track", Track, trackX, barY, trackWidth, trackHeight, true);
@@ -296,8 +378,8 @@ namespace Daima
                     percentX, barY - 3f, 44f, 16f, font);
 
                 AttachTooltip(track, tooltip,
-                    row.route + "\n计划任务 " + row.planned + " 单\n已完成 " + row.completed +
-                    " 单\n完成率 " + row.RateText + "\n状态 " + row.status);
+                    row.process + "\n计划批次 " + row.planned + " 批\n完成批次 " + row.completed +
+                    " 批\n执行进度 " + row.RateText + "\n状态 " + row.status);
             }
 
             return root;
@@ -305,7 +387,8 @@ namespace Daima
 
         // ------------------------------------------------------------------ Image5：物料库存趋势
 
-        public static RectTransform BuildInventoryChart(RectTransform parent, List<InventoryRowData> rows, Font font)
+        public static RectTransform BuildInventoryChart(RectTransform parent, List<InventoryRowData> rows, Font font,
+                                                        InventoryKpiData kpi = null)
         {
             RectTransform root = CreateRoot(parent, "__Table_物料库存趋势", 8f);
             float width = root.rect.width;
@@ -316,14 +399,33 @@ namespace Daima
             legendX = Legend(root, font, legendX, 2f, Orange, "线边库存");
             Legend(root, font, legendX, 2f, Green, "成品");
 
-            int total = rows.Count > 0 ? rows[rows.Count - 1].Total : 0;
+            // 当前库存优先取 today.kpi，接口不可用时回退到最后一天的明细
+            int total, raw, lineSide, finished;
+            if (kpi != null && kpi.total > 0)
+            {
+                total = kpi.total;
+                raw = kpi.raw;
+                lineSide = kpi.lineSide;
+                finished = kpi.finished;
+            }
+            else if (rows != null && rows.Count > 0)
+            {
+                InventoryRowData last = rows[rows.Count - 1];
+                total = last.Total;
+                raw = last.raw;
+                lineSide = last.lineSide;
+                finished = last.finished;
+            }
+            else
+            {
+                total = raw = lineSide = finished = 0;
+            }
+
             HeaderKpi(root, font, total.ToString("N0"), "当前总库存", 4f, 22);
 
             // 只保留三个圆环 KPI，不画折线 / 网格 / 坐标轴
-            if (rows.Count > 0)
+            if (total > 0)
             {
-                InventoryRowData d = rows[rows.Count - 1];
-
                 float ringSize = Mathf.Min(124f, height - 56f);
                 if (ringSize < 60f) ringSize = 60f;
 
@@ -332,10 +434,10 @@ namespace Daima
                 float originX = (width - allWidth) * 0.5f;
                 float originY = Mathf.Max(50f, (height - ringSize) * 0.5f + 14f);
 
-                const float norm = 900f;
-                DrawRing(root, font, originX, originY, ringSize, d.raw / norm, Blue, d.raw.ToString("N0"), "原材料");
-                DrawRing(root, font, originX + ringSize + ringGap, originY, ringSize, d.lineSide / norm, Orange, d.lineSide.ToString("N0"), "线边库存");
-                DrawRing(root, font, originX + (ringSize + ringGap) * 2f, originY, ringSize, d.finished / norm, Green, d.finished.ToString("N0"), "成品");
+                const float rawNorm = 1600f, lineNorm = 1000f, finishedNorm = 800f;
+                DrawRing(root, font, originX, originY, ringSize, raw / rawNorm, Blue, raw.ToString("N0"), "原材料");
+                DrawRing(root, font, originX + ringSize + ringGap, originY, ringSize, lineSide / lineNorm, Orange, lineSide.ToString("N0"), "线边库存");
+                DrawRing(root, font, originX + (ringSize + ringGap) * 2f, originY, ringSize, finished / finishedNorm, Green, finished.ToString("N0"), "成品");
             }
 
             return root;
@@ -502,6 +604,15 @@ namespace Daima
                 x + 13f, y, 92f, 16f, font);
 
             return x + 13f + text.Length * 11f + 18f;
+        }
+
+        static float LineLegend(RectTransform root, Font font, float x, float y, Color color, string text)
+        {
+            Img(root, "LegendLine", color, x, y + 6f, 14f, 2f);
+            Txt(root, "LegendText", text, 10, Muted, TextAnchor.MiddleLeft,
+                x + 19f, y, 130f, 16f, font);
+
+            return x + 19f + text.Length * 10f + 14f;
         }
 
         static void HeaderKpi(RectTransform root, Font font, string value, string label,

@@ -121,7 +121,7 @@ namespace Daima
         static void Build()
         {
             Transform loadChart = FindChart("订单负荷与产能匹配", "Image3");
-            Transform routeChart = FindChart("AGV配送任务进度", "Image4");
+            Transform routeChart = FindChart("各工序配方执行进度", "Image4");
             Transform stockChart = FindChart("物料库存趋势", "Image5");
             Transform agvChart = FindChart("AGV实时调度", "Image2");
 
@@ -244,24 +244,24 @@ namespace Daima
             Text peakText = FindText(root, "Peak");
             Text capacityText = FindText(root, "CapacityLabel");
 
-            int capacity = capacityText != null ? ParseInt(capacityText.text) : 420;
-            int peakHours = peakText != null ? ParseInt(peakText.text) : 478;
+            int capacity = capacityText != null ? ParseInt(capacityText.text) : 205;
+            int peakTons = peakText != null ? ParseInt(peakText.text) : 235;
 
             float maxHeight = 1f;
             for (int i = 0; i < bars.Count; i++)
                 maxHeight = Mathf.Max(maxHeight, bars[i].rectTransform.rect.height);
 
-            float hoursPerPixel = peakHours / maxHeight;
+            float tonsPerPixel = peakTons / maxHeight;
 
             for (int i = 0; i < bars.Count; i++)
             {
-                int plan = Mathf.RoundToInt(bars[i].rectTransform.rect.height * hoursPerPixel);
+                int plan = Mathf.RoundToInt(bars[i].rectTransform.rect.height * tonsPerPixel);
                 int rate = capacity > 0 ? Mathf.RoundToInt(plan * 100f / capacity) : 0;
                 string date = i < dates.Count && dates[i] != null ? dates[i].text : "第 " + (i + 1) + " 天";
                 string status = rate >= 100 ? "超负荷" : rate >= 90 ? "接近饱和" : rate >= 70 ? "正常" : "产能充足";
 
-                string content = date + "\n计划工时 " + plan + " h\n可用产能 " + capacity +
-                                 " h\n负载率 " + rate + "%\n状态 " + status;
+                string content = date + "\n计划产量 " + plan + " t\n有效产能 " + capacity +
+                                 " t\n负荷率 " + rate + "%\n状态 " + status;
                 AddHover(bars[i], view, content);
             }
         }
@@ -284,17 +284,39 @@ namespace Daima
 
             for (int i = 0; i < tracks.Count; i++)
             {
-                string route = i < routes.Count && routes[i] != null ? routes[i].text : "路线 " + (i + 1);
-                int planned = i < plans.Count && plans[i] != null ? ParseInt(plans[i].text) : 0;
+                string process = i < routes.Count && routes[i] != null ? routes[i].text : "工序 " + (i + 1);
                 float rate = i < percents.Count && percents[i] != null ? ParseFloat(percents[i].text) : 0f;
-                int completed = Mathf.RoundToInt(planned * rate / 100f);
-                string status = rate >= 99.5f ? "已完成" : rate >= 85f ? "正常推进" : "滞后";
 
-                string content = route + "\n计划 " + planned + " 单\n已完成 " + completed +
-                                 " 单\n完成率 " + rate.ToString("0.0", CultureInfo.InvariantCulture) +
+                int planned = 0, completed = 0;
+                if (i < plans.Count && plans[i] != null)
+                    ParseBatchPair(plans[i].text, out planned, out completed);
+                if (completed <= 0 && rate > 0f)
+                    completed = Mathf.RoundToInt(planned * rate / 100f);
+
+                string status = rate >= 100f ? "已完成" : rate >= 80f ? "正常推进" : rate >= 60f ? "偏慢" : "滞后";
+
+                string content = process + "\n计划批次 " + planned + " 批\n完成批次 " + completed +
+                                 " 批\n执行进度 " + rate.ToString("0.0", CultureInfo.InvariantCulture) +
                                  "%\n状态 " + status;
                 AddHover(tracks[i], view, content);
             }
+        }
+
+        static void ParseBatchPair(string text, out int planned, out int completed)
+        {
+            planned = 0;
+            completed = 0;
+            if (string.IsNullOrEmpty(text)) return;
+
+            int split = text.IndexOf("完成", System.StringComparison.Ordinal);
+            if (split < 0)
+            {
+                planned = ParseInt(text);
+                return;
+            }
+
+            planned = ParseInt(text.Substring(0, split));
+            completed = ParseInt(text.Substring(split));
         }
 
         // ------------------------------------------------------------------ Image5

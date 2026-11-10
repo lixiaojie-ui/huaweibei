@@ -56,12 +56,16 @@ namespace Daima
         public int doneToday;
     }
 
-    /// <summary>订单负荷与产能匹配一行。</summary>
+    /// <summary>各产线日计划产量与日产能缺口一行。</summary>
     public class LoadRowData
     {
         public string date;         // MM-dd
-        public int planHours;
-        public int capacity;
+        public int line1;           // 1号制粒线，吨/日
+        public int line2;           // 2号制粒线，吨/日
+        public int line3;           // 3号膨化线，吨/日
+        public int capacity;        // 日有效产能，吨/日
+        public int total;           // 派生：三条线合计
+        public int gap;             // 派生：超出产能的缺口
         public float rate;          // 派生
         public string status;       // 派生
 
@@ -69,18 +73,20 @@ namespace Daima
 
         public void Refresh()
         {
-            rate = capacity > 0 ? planHours * 100f / capacity : 0f;
-            status = rate > 100f ? "超载" : (rate >= 90f ? "饱和" : "正常");
+            total = line1 + line2 + line3;
+            gap = total > capacity ? total - capacity : 0;
+            rate = capacity > 0 ? total * 100f / capacity : 0f;
+            status = gap > 0 ? "缺口" : (rate >= 90f ? "饱和" : "正常");
         }
     }
 
-    /// <summary>AGV 配送任务进度一行。</summary>
-    public class RouteRowData
+    /// <summary>各工序配方执行进度一行。</summary>
+    public class RecipeRowData
     {
-        public string route;
-        public int planned;
-        public int completed;
-        public float rate;          // 派生
+        public string process;      // 产线/工序
+        public int planned;         // 计划批次
+        public int completed;       // 已完成批次
+        public float rate;          // 派生：完成进度
         public string status;       // 派生
 
         public string RateText { get { return rate.ToString("0.0") + "%"; } }
@@ -88,7 +94,7 @@ namespace Daima
         public void Refresh()
         {
             rate = planned > 0 ? completed * 100f / planned : 0f;
-            status = rate >= 100f ? "已完成" : (rate >= 80f ? "进行中" : "滞后");
+            status = rate >= 100f ? "已完成" : (rate >= 80f ? "正常推进" : (rate >= 60f ? "偏慢" : "滞后"));
         }
     }
 
@@ -103,9 +109,37 @@ namespace Daima
         public int Total { get { return raw + lineSide + finished; } }
     }
 
+    /// <summary>AGV 实时调度 KPI（today.agv）。</summary>
+    public class AgvKpiData
+    {
+        public int running;         // 在线车辆
+        public int total;           // 车辆总数
+        public float avgLoad;       // 平均负载 %
+        public float taskExec;      // 配送达成率 %
+        public float onlineRate;    // 车辆完好率 %
+        public int tasksExecuting;  // 执行中任务
+    }
+
+    /// <summary>产线产能 KPI（capacity_summary + today.capacity）。</summary>
+    public class LoadKpiData
+    {
+        public float loadRate;          // 综合负荷率 %
+        public float peak;              // 峰值 t
+        public float effectiveCapacity; // 日有效产能 t
+    }
+
+    /// <summary>物料库存 KPI（today.kpi）。</summary>
+    public class InventoryKpiData
+    {
+        public int raw;
+        public int lineSide;
+        public int finished;
+        public int total;
+    }
+
     /// <summary>
     /// 演示数据。数值是编的，但彼此满足业务规则：
-    /// 订单的库存/交期与状态、预警一致；负荷率 = 计划工时 / 可用产能；
+    /// 订单的库存/交期与状态、预警一致；负荷率 = 日计划产量 / 日有效产能；
     /// 完成率 = 已完成 / 计划任务；库存合计 = 原材料 + 线边库存 + 成品。
     /// </summary>
     public static class DashboardMockData
@@ -176,18 +210,23 @@ namespace Daima
 
         public static List<LoadRowData> CreateLoad()
         {
-            // 最近 7 天：产能固定 420h，计划工时上下波动（10-30 为峰值）
-            // 合计 2854h / 2940h ≈ 97.1% 综合负荷率
-            int[] plan = { 391, 399, 438, 443, 478, 401, 304 };
-            var list = new List<LoadRowData>();
+            // 2026-10-26 至 2026-11-01，三条产线日计划产量（吨/日），
+            // 日计划合计 1393 t，日有效产能 205 t，综合负荷率 97.1%，10-30 缺口 30 t。
+            string[] dates = { "10-26", "10-27", "10-28", "10-29", "10-30", "10-31", "11-01" };
+            int[] line1 = { 78, 82, 90, 90, 90, 88, 86 };
+            int[] line2 = { 62, 64, 70, 70, 85, 68, 66 };
+            int[] line3 = { 36, 38, 45, 45, 60, 40, 40 };
 
-            for (int i = 0; i < plan.Length; i++)
+            var list = new List<LoadRowData>();
+            for (int i = 0; i < dates.Length; i++)
             {
                 var row = new LoadRowData
                 {
-                    date = DateTime.Today.AddDays(i - 6).ToString("MM-dd", CultureInfo.InvariantCulture),
-                    planHours = plan[i],
-                    capacity = 420
+                    date = dates[i],
+                    line1 = line1[i],
+                    line2 = line2[i],
+                    line3 = line3[i],
+                    capacity = 205
                 };
                 row.Refresh();
                 list.Add(row);
@@ -196,15 +235,17 @@ namespace Daima
             return list;
         }
 
-        public static List<RouteRowData> CreateRoutes()
+        public static List<RecipeRowData> CreateRecipeProgress()
         {
-            var list = new List<RouteRowData>
+            // 各工序当日配方执行：计划批次 / 已完成批次 / 进度。
+            // 合计计划 48 批，完成 36 批，综合执行率 75.0%。
+            var list = new List<RecipeRowData>
             {
-                new RouteRowData { route = "原料库 → 线边仓", planned = 32, completed = 29 },
-                new RouteRowData { route = "线边仓 → 装配线", planned = 26, completed = 22 },
-                new RouteRowData { route = "原料库 → 装配线", planned = 34, completed = 25 },
-                new RouteRowData { route = "装配线 → 成品区", planned = 25, completed = 19 },
-                new RouteRowData { route = "成品区 → 线边仓", planned = 21, completed = 18 }
+                new RecipeRowData { process = "1#配料线", planned = 10, completed = 8 },
+                new RecipeRowData { process = "2#配料线", planned = 12, completed = 9 },
+                new RecipeRowData { process = "1#发酵罐", planned = 8, completed = 5 },
+                new RecipeRowData { process = "2#发酵罐", planned = 8, completed = 6 },
+                new RecipeRowData { process = "1#包装线", planned = 10, completed = 8 }
             };
 
             foreach (var row in list) row.Refresh();
