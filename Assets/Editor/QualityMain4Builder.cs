@@ -13,7 +13,7 @@ using Daima;
 /// </summary>
 public static class QualityMain4Builder
 {
-    const string BuiltKey = "QualityMain4_Built_v5";
+    const string BuiltKey = "QualityMain4_Built_v6";
 
     static readonly Color Ink = new Color(0.93f, 0.97f, 1f, 1f);
     static readonly Color Muted = new Color(0.62f, 0.74f, 0.85f, 1f);
@@ -102,14 +102,14 @@ public static class QualityMain4Builder
         RectTransform[] rf = Frames(right);
         if (lf == null || rf == null) return false;
 
-        Retitle(left, new string[] { "检测总览", "产线总览" }, "产线总览");
-        Retitle(left, new string[] { "环节合格率", "工段设备分布" }, "工段设备分布");
-        Retitle(left, new string[] { "异常类型构成", "设备状态构成" }, "设备状态构成");
-        Retitle(left, new string[] { "异常趋势", "产量趋势" }, "产量趋势");
-        Retitle(right, new string[] { "实时异常监控", "实时运行监控" }, "实时运行监控");
-        Retitle(right, new string[] { "外壳缺陷部位", "工段设备状态" }, "工段设备状态");
-        Retitle(right, new string[] { "外壳检测合格率", "设备综合效率" }, "设备综合效率");
-        Retitle(right, new string[] { "尺寸偏差记录", "设备状态清单" }, "设备状态清单");
+        Retitle(left, new string[] { "检测总览", "产线总览", "车间设备总览" }, "车间设备总览");
+        Retitle(left, new string[] { "环节合格率", "工段设备分布", "各工段设备数量" }, "各工段设备数量");
+        Retitle(left, new string[] { "异常类型构成", "设备状态构成", "采集数据类型构成" }, "采集数据类型构成");
+        Retitle(left, new string[] { "异常趋势", "产量趋势", "设备运行趋势" }, "设备运行趋势");
+        Retitle(right, new string[] { "实时异常监控", "实时运行监控", "重点设备实时监控" }, "重点设备实时监控");
+        Retitle(right, new string[] { "外壳缺陷部位", "工段设备状态", "设备采集参数明细" }, "设备采集参数明细");
+        Retitle(right, new string[] { "外壳检测合格率", "设备综合效率", "能耗与环保监测" }, "能耗与环保监测");
+        Retitle(right, new string[] { "尺寸偏差记录", "设备状态清单", "工段设备清单" }, "工段设备清单");
 
         BuildOverview(lf[0]);
         BuildSections(lf[1]);
@@ -231,6 +231,7 @@ public static class QualityMain4Builder
                               float start, float sweep, float gap)
     {
         RectTransform rt = Rect(parent, name, x, y, size, size);
+        rt.gameObject.AddComponent<CanvasRenderer>();
         var ring = rt.gameObject.AddComponent<UIRingGraphic>();
         ring.SetData(values, colors, widthRatio, start, sweep, gap);
         ring.raycastTarget = false;
@@ -245,25 +246,25 @@ public static class QualityMain4Builder
         float w = r.sizeDelta.x;
 
         Txt(r, "Tag", "今日", 9, Muted, TextAnchor.UpperRight, w - 134f, 6f, 48f, 14f);
-        Txt(r, "Label", "今日生产总量", 10, Muted, TextAnchor.UpperLeft, 14f, 8f, 150f, 14f);
-        Value(r, "Total", "318", 34, Ink, 12f, 22f, 150f, 42f, TextAnchor.UpperLeft);
-        Txt(r, "Unit", "吨", 10, Muted, TextAnchor.UpperLeft, 92f, 48f, 20f, 14f);
+        Txt(r, "Label", "设备总数", 10, Muted, TextAnchor.UpperLeft, 14f, 8f, 150f, 14f);
+        Value(r, "Total", "31", 34, Ink, 12f, 22f, 150f, 42f, TextAnchor.UpperLeft);
+        Txt(r, "Unit", "台", 10, Muted, TextAnchor.UpperLeft, 74f, 48f, 20f, 14f);
 
         Img(r, "RunDot", 14f, 74f, 6f, 6f, Ok);
         Txt(r, "Run", "运行正常", 9, Muted, TextAnchor.MiddleLeft, 26f, 68f, 56f, 14f);
-        Value(r, "RunDelta", "+1.8%", 10, Ok, 84f, 68f, 44f, 14f);
-        Txt(r, "RunNote", "较昨日", 9, Muted, TextAnchor.MiddleLeft, 126f, 68f, 44f, 14f);
+        Value(r, "RunDelta", "+2", 10, Ok, 84f, 68f, 44f, 14f);
+        Txt(r, "RunNote", "较昨日", 9, Muted, TextAnchor.MiddleLeft, 106f, 68f, 44f, 14f);
 
         Divider(r, 90f, w, Line);
         Txt(r, "Online",
-            "在线设备 <color=#EDF7FF><b>31</b></color> 台        运行 <color=#EDF7FF><b>27</b></color> 台        报警 <color=#F6C063><b>1</b></color> 台",
+            "运行中 <color=#EDF7FF><b>27</b></color> 台        待机 <color=#EDF7FF><b>2</b></color> 台        报警 <color=#F6C063><b>1</b></color> 台",
             9, Muted, TextAnchor.UpperLeft, 14f, 100f, w - 28f, 14f);
 
         Divider(r, 122f, w, Line);
 
         float col = (w - 28f) / 3f;
-        string[] labels = { "已完成工单", "在制批次", "成品库存" };
-        string[] values = { "42", "8", "1,286" };
+        string[] labels = { "工段数", "今日产量", "综合OEE" };
+        string[] values = { "5", "318", "86.4%" };
         for (int i = 0; i < 3; i++)
         {
             float x = 14f + i * col;
@@ -276,9 +277,9 @@ public static class QualityMain4Builder
         float ringX = w - ringSize - 14f;
         Ring(r, "RateTrack", ringX, 22f, ringSize, new float[] { 1f }, new Color[] { Track }, 0.16f, 90f, 360f, 0f);
         Ring(r, "RateRing", ringX, 22f, ringSize, new float[] { 87.1f, 12.9f },
-             new Color[] { Cyan, new Color(0f, 0f, 0f, 0f) }, 0.16f, 90f, 360f, 0f);
-        Value(r, "RateValue", "87.1%", 18, Cyan, ringX, 58f, ringSize, 20f, TextAnchor.MiddleCenter);
-        Txt(r, "RateLabel", "设备开动率", 8, Muted, TextAnchor.MiddleCenter, ringX, 80f, ringSize, 12f);
+             new Color[] { Ok, new Color(0f, 0f, 0f, 0f) }, 0.16f, 90f, 360f, 0f);
+        Value(r, "RateValue", "87.1%", 18, Ok, ringX, 58f, ringSize, 20f, TextAnchor.MiddleCenter);
+        Txt(r, "RateLabel", "设备运行率", 8, Muted, TextAnchor.MiddleCenter, ringX, 80f, ringSize, 12f);
     }
 
     // ------------------------------------------------------------------ 左 2 工段设备分布
@@ -309,55 +310,57 @@ public static class QualityMain4Builder
         Txt(r, "Foot", "粉碎、配料、发酵、混合、烘干、包装、环保全流程覆盖", 9, Muted, TextAnchor.UpperLeft, 14f, 172f, w - 28f, 12f);
     }
 
-    // ------------------------------------------------------------------ 左 3 设备状态构成
+    // ------------------------------------------------------------------ 左 3 采集数据类型构成
 
     static void BuildStatus(RectTransform frame)
     {
         RectTransform r = Begin(frame);
         float w = r.sizeDelta.x;
 
-        string[] names = { "运行中", "待机", "报警", "检修" };
-        int[] counts = { 27, 2, 1, 1 };
-        float[] pct = { 87.1f, 6.5f, 3.2f, 3.2f };
-        Color[] colors = { Cyan, Blue, Warn, new Color(0.58f, 0.68f, 0.76f, 1f) };
+        string[] names = { "温度类", "电流类", "运行状态", "料位/称重", "粉尘/环保", "流量/压力", "报警/故障" };
+        float[] counts = { 9f, 8f, 7f, 6f, 5f, 4f, 2f };
+        float[] pct = { 22.0f, 19.5f, 17.1f, 14.6f, 12.2f, 9.8f, 4.8f };
+        Color[] colors = { Cyan, Blue, Ok, Warn, Red,
+                           new Color(0.70f, 0.53f, 1f, 1f),
+                           new Color(1f, 0.84f, 0.31f, 1f) };
 
-        float ringSize = 126f;
-        float ringX = 16f;
-        float ringY = 36f;
-        Ring(r, "Donut", ringX, ringY, ringSize, new float[] { 27f, 2f, 1f, 1f }, colors, 0.30f, 90f, 360f, 3f);
+        float ringSize = 116f;
+        float ringX = 10f;
+        float ringY = 40f;
+        Ring(r, "Donut", ringX, ringY, ringSize, counts, colors, 0.30f, 90f, 360f, 3f);
 
         float ccx = ringX + ringSize * 0.5f;
         float ccy = ringY + ringSize * 0.5f;
-        Value(r, "Total", "31", 22, Ink, ccx - 42f, ccy - 16f, 84f, 26f, TextAnchor.MiddleCenter);
-        Txt(r, "TotalLabel", "在线设备", 8, Muted, TextAnchor.MiddleCenter, ccx - 42f, ccy + 10f, 84f, 12f);
+        Value(r, "Total", "8", 22, Ink, ccx - 42f, ccy - 16f, 84f, 26f, TextAnchor.MiddleCenter);
+        Txt(r, "TotalLabel", "数据类型", 8, Muted, TextAnchor.MiddleCenter, ccx - 42f, ccy + 10f, 84f, 12f);
 
-        float lx = ringX + ringSize + 18f;
-        for (int i = 0; i < 4; i++)
+        float lx = ringX + ringSize + 14f;
+        for (int i = 0; i < 7; i++)
         {
-            float y = 32f + i * 32f;
+            float y = 22f + i * 22f;
             Img(r, "Dot" + i, lx, y + 5f, 6f, 6f, colors[i]);
-            Txt(r, "Name" + i, names[i], 10, Ink, TextAnchor.MiddleLeft, lx + 10f, y, 66f, 16f);
-            Value(r, "Count" + i, counts[i] + " 台", 12, Ink, lx + 82f, y, 46f, 16f, TextAnchor.MiddleRight);
-            Txt(r, "Pct" + i, pct[i].ToString("0.0") + "%", 9, Muted, TextAnchor.MiddleRight,
-                lx + 134f, y + 1f, 48f, 14f);
+            Txt(r, "Name" + i, names[i], 9, Ink, TextAnchor.MiddleLeft, lx + 10f, y, 56f, 14f);
+            Value(r, "Count" + i, counts[i].ToString(), 11, Ink, lx + 68f, y, 28f, 14f, TextAnchor.MiddleRight);
+            Txt(r, "Pct" + i, pct[i].ToString("0.0") + "%", 8, Muted, TextAnchor.MiddleRight,
+                lx + 100f, y + 1f, 40f, 12f);
         }
 
-        Txt(r, "Foot", "运行 27 台 · 报警 1 台（除尘风机）", 9, Muted, TextAnchor.UpperLeft, 14f, 176f, w - 28f, 12f);
+        Txt(r, "Foot", "共 41 个采集点 · 覆盖全流程", 9, Muted, TextAnchor.UpperLeft, 14f, 176f, w - 28f, 12f);
     }
 
-    // ------------------------------------------------------------------ 左 4 产量趋势
+    // ------------------------------------------------------------------ 左 4 设备运行趋势
 
     static void BuildOutputTrend(RectTransform frame)
     {
         RectTransform r = Begin(frame);
         float w = r.sizeDelta.x;
 
-        int[] tons = { 286, 302, 295, 318, 306, 324, 318 };
-        float[] rates = { 84.2f, 85.6f, 84.9f, 86.8f, 87.0f, 87.4f, 87.1f };
+        int[] online = { 24, 26, 25, 27, 26, 28, 27 };
+        float[] oee = { 82.3f, 84.1f, 83.5f, 85.2f, 86.0f, 87.1f, 86.4f };
         string[] days = { "11/07", "11/08", "11/09", "11/10", "11/11", "11/12", "11/13" };
 
-        Txt(r, "L1", "■ 产量(吨)", 9, Muted, TextAnchor.UpperRight, w - 156f, 6f, 70f, 12f);
-        Txt(r, "L2", "— 开动率", 9, Ok, TextAnchor.UpperRight, w - 78f, 6f, 66f, 12f);
+        Txt(r, "L1", "■ 开机数(台)", 9, Muted, TextAnchor.UpperRight, w - 156f, 6f, 80f, 12f);
+        Txt(r, "L2", "— OEE", 9, Ok, TextAnchor.UpperRight, w - 78f, 6f, 66f, 12f);
 
         float left = 40f;
         float right = w - 16f;
@@ -366,8 +369,8 @@ public static class QualityMain4Builder
         float plotH = 118f;
         float baseline = top + plotH;
 
-        Txt(r, "Y400", "400", 8, Muted, TextAnchor.MiddleRight, 10f, top - 6f, 26f, 12f);
-        Txt(r, "Y200", "200", 8, Muted, TextAnchor.MiddleRight, 10f, top + plotH * 0.5f - 6f, 26f, 12f);
+        Txt(r, "Y32", "32", 8, Muted, TextAnchor.MiddleRight, 10f, top - 6f, 26f, 12f);
+        Txt(r, "Y16", "16", 8, Muted, TextAnchor.MiddleRight, 10f, top + plotH * 0.5f - 6f, 26f, 12f);
         Txt(r, "Y0", "0", 8, Muted, TextAnchor.MiddleRight, 10f, baseline - 6f, 26f, 12f);
         Img(r, "Base", left, baseline, areaW, 1f, Line);
 
@@ -377,19 +380,21 @@ public static class QualityMain4Builder
         for (int i = 0; i < 7; i++)
         {
             float cx = left + slot * (i + 0.5f);
-            float h = plotH * (tons[i] / 400f);
+            float h = plotH * (online[i] / 32f);
             Img(r, "Bar" + i, cx - barW * 0.5f, baseline - h, barW, h, Blue);
-            Txt(r, "BarValue" + i, tons[i].ToString(), 8, Muted, TextAnchor.LowerCenter,
+            Txt(r, "BarValue" + i, online[i].ToString(), 8, Muted, TextAnchor.LowerCenter,
                 cx - 18f, baseline - h - 14f, 36f, 12f);
             Txt(r, "Day" + i, days[i], 8, Muted, TextAnchor.UpperCenter, cx - 22f, baseline + 4f, 44f, 12f);
         }
 
         RectTransform lineRect = Rect(r, "TrendLine", left, top, areaW, plotH);
+        lineRect.gameObject.AddComponent<CanvasRenderer>();
         var line = lineRect.gameObject.AddComponent<UILineGraphic>();
+        line.raycastTarget = false;
         var points = new List<Vector2>();
         for (int i = 0; i < 7; i++)
         {
-            float y = Mathf.Clamp01((rates[i] - 80f) / 20f);
+            float y = Mathf.Clamp01((oee[i] - 80f) / 20f);
             points.Add(new Vector2((i + 0.5f) / 7f, y));
         }
         line.SetData(points, 1.6f, 3f, Ok);
@@ -406,8 +411,9 @@ public static class QualityMain4Builder
         string[] limits = { "电流 · 上限 80 A", "床温 · 上限 45 ℃", "进风 · 上限 95 ℃", "风压 · 上限 1.8 kPa" };
         string[] values = { "62", "38.5", "78", "1.62" };
         string[] units = { "A", "℃", "℃", "kPa" };
-        float[] ratios = { 0.78f, 0.86f, 0.82f, 0.90f };
-        Color[] colors = { Cyan, Warn, Blue, Warn };
+        float[] ratios = { 0.775f, 0.856f, 0.821f, 0.90f };
+        Color[] colors = { Cyan, Blue, Warn, Ok };
+        bool[] warn = { false, false, true, false };
 
         float barX = 96f;
         float barW = w - 190f;
@@ -415,7 +421,6 @@ public static class QualityMain4Builder
         for (int i = 0; i < 4; i++)
         {
             float y = 16f + i * 42f;
-            bool warn = ratios[i] >= 0.85f;
 
             Txt(r, "Name" + i, names[i], 10, Ink, TextAnchor.MiddleLeft, 14f, y, 82f, 16f);
             Txt(r, "Limit" + i, limits[i], 8, Muted, TextAnchor.MiddleLeft, 14f, y + 15f, 82f, 12f);
@@ -424,64 +429,50 @@ public static class QualityMain4Builder
             Img(r, "Fill" + i, barX, y + 8f, barW * ratios[i], 5f, colors[i]);
             Img(r, "Mark" + i, barX + barW - 1f, y + 4f, 1f, 13f, Warn);
 
-            Value(r, "Value" + i, values[i], 15, warn ? Warn : Ink,
+            Value(r, "Value" + i, values[i], 15, warn[i] ? Warn : Ink,
                   w - 82f, y, 38f, 20f, TextAnchor.MiddleRight);
             Txt(r, "Unit" + i, units[i], 8, Muted, TextAnchor.MiddleLeft, w - 42f, y + 7f, 28f, 12f);
         }
     }
 
-    // ------------------------------------------------------------------ 右 2 工段设备状态
+    // ------------------------------------------------------------------ 右 2 设备采集参数明细
 
     static void BuildSectionStatus(RectTransform frame)
     {
         RectTransform r = Begin(frame);
         float w = r.sizeDelta.x;
 
-        string[] legend = { "运行", "待机", "报警", "检修" };
-        Color[] legendColors = { Cyan, Blue, Warn, new Color(0.58f, 0.68f, 0.76f, 1f) };
-        float lx = 14f;
-        for (int i = 0; i < 4; i++)
-        {
-            Img(r, "LDot" + i, lx, 7f, 6f, 6f, legendColors[i]);
-            Txt(r, "LLabel" + i, legend[i], 8, Muted, TextAnchor.MiddleLeft, lx + 9f, 3f, 34f, 14f);
-            lx += 44f;
-        }
+        float c1 = 14f;
+        float c2 = w * 0.46f;
+        float c3 = w - 70f;
 
-        string[] names = { "前处理", "一混", "二混", "烘干包装", "动力环保" };
-        int[][] parts =
-        {
-            new int[] { 7, 1, 0, 0 },
-            new int[] { 6, 1, 0, 0 },
-            new int[] { 5, 0, 0, 0 },
-            new int[] { 5, 0, 0, 0 },
-            new int[] { 4, 0, 1, 1 }
-        };
-        int[] totals = { 8, 7, 5, 5, 6 };
+        Txt(r, "H1", "设备", 9, Muted, TextAnchor.MiddleLeft, c1, 8f, 120f, 14f);
+        Txt(r, "H2", "采集参数", 9, Muted, TextAnchor.MiddleLeft, c2, 8f, 120f, 14f);
+        Txt(r, "H3", "状态", 9, Muted, TextAnchor.MiddleRight, c3, 8f, 56f, 14f);
+        Divider(r, 24f, w, Line);
 
-        float baseline = 150f;
-        float plotH = 104f;
-        float max = 9f;
-        float slot = (w - 28f) / 5f;
-        float barW = 26f;
+        string[] names = { "一混配料秤", "二混混合机", "液体发酵罐", "固体发酵包装线", "配电室" };
+        string[] params_ = { "配方号 / 称重误差", "混合时间 / 电流", "温度 / pH / 溶氧", "袋重 / 封口温度", "总用电 / 功率因数" };
+        string[] states = { "正常", "正常", "关注", "正常", "正常" };
+        bool[] warn = { false, false, true, false, false };
 
         for (int i = 0; i < 5; i++)
         {
-            float cx = 14f + slot * (i + 0.5f);
-            float y = baseline;
-            for (int s = 0; s < 4; s++)
-            {
-                float h = plotH * (parts[i][s] / max);
-                y -= h;
-                if (parts[i][s] > 0) Img(r, "Seg" + i + "_" + s, cx - barW * 0.5f, y, barW, h, legendColors[s]);
-            }
-            Value(r, "Total" + i, totals[i].ToString(), 10, Ink, cx - 18f, y - 16f, 36f, 14f, TextAnchor.LowerCenter);
-            Txt(r, "Name" + i, names[i], 8, Muted, TextAnchor.UpperCenter, cx - 28f, baseline + 4f, 56f, 12f);
+            float y = 30f + i * 27f;
+            Color sc = warn[i] ? Warn : Ok;
+            Txt(r, "N" + i, names[i], 9, Ink, TextAnchor.MiddleLeft, c1, y, 110f, 14f);
+            Txt(r, "P" + i, params_[i], 8, Muted, TextAnchor.MiddleLeft, c2, y, 130f, 14f);
+            Img(r, "Dot" + i, c3 - 4f, y + 5f, 5f, 5f, sc);
+            Txt(r, "S" + i, states[i], 9, sc, TextAnchor.MiddleRight, c3 + 4f, y, 46f, 14f);
+            Divider(r, y + 21f, w, LineSoft);
         }
 
-        Txt(r, "Foot", "运行 27 · 待机 2 · 报警 1 · 检修 1", 9, Muted, TextAnchor.UpperRight, w - 196f, 176f, 182f, 12f);
+        Txt(r, "FootL", "在线 <color=#EDF7FF>27</color>", 9, Muted, TextAnchor.UpperLeft, 14f, 176f, 90f, 12f);
+        Txt(r, "FootC", "采集点 <color=#EDF7FF>41</color>", 9, Muted, TextAnchor.UpperCenter, w * 0.40f, 176f, 100f, 12f);
+        Txt(r, "FootR", "异常 <color=#F6C063>1</color>", 9, Muted, TextAnchor.UpperRight, w - 90f, 176f, 76f, 12f);
     }
 
-    // ------------------------------------------------------------------ 右 3 设备综合效率
+    // ------------------------------------------------------------------ 右 3 能耗与环保监测
 
     static void BuildOee(RectTransform frame)
     {
@@ -492,13 +483,13 @@ public static class QualityMain4Builder
         float gx = 16f;
         float gy = 16f;
         Ring(r, "Track", gx, gy, size, new float[] { 1f }, new Color[] { Track }, 0.11f, 205f, 235f, 0f);
-        Ring(r, "Gauge", gx, gy, size, new float[] { 87.1f, 12.9f },
-             new Color[] { Cyan, new Color(0f, 0f, 0f, 0f) }, 0.11f, 205f, 235f, 0f);
+        Ring(r, "Gauge", gx, gy, size, new float[] { 86.4f, 13.6f },
+             new Color[] { Ok, new Color(0f, 0f, 0f, 0f) }, 0.11f, 205f, 235f, 0f);
 
         float ccx = gx + size * 0.5f;
         float ccy = gy + size * 0.5f;
-        Value(r, "Big", "87.1%", 25, Cyan, ccx - 70f, ccy - 15f, 140f, 26f, TextAnchor.MiddleCenter);
-        Txt(r, "BigLabel", "OEE", 8, Muted, TextAnchor.MiddleCenter, ccx - 50f, ccy + 11f, 100f, 12f);
+        Value(r, "Big", "86.4%", 25, Ok, ccx - 70f, ccy - 15f, 140f, 26f, TextAnchor.MiddleCenter);
+        Txt(r, "BigLabel", "综合OEE", 8, Muted, TextAnchor.MiddleCenter, ccx - 50f, ccy + 11f, 100f, 12f);
 
         string[] ticks = { "0", "25", "50", "75", "100" };
         float tickRadius = size * 0.5f - 10f;
@@ -511,25 +502,26 @@ public static class QualityMain4Builder
             Txt(r, "Tick" + i, ticks[i], 7, Muted, TextAnchor.MiddleCenter, tx, ty, 28f, 12f);
         }
 
-        string[] labels = { "时间开动率", "性能开动率", "合格品率" };
-        string[] values = { "91.2%", "95.6%", "99.7%" };
+        string[] labels = { "天然气", "用电量", "粉尘排放" };
+        string[] values = { "326 m³", "4.82 kWh", "达标" };
+        Color[] vColors = { Ink, Ink, Ok };
         for (int i = 0; i < 3; i++)
         {
             float x = w - 198f;
             float y = 34f + i * 26f;
             Txt(r, "SL" + i, labels[i], 9, Muted, TextAnchor.MiddleLeft, x, y, 90f, 14f);
-            Value(r, "S" + i, values[i], 13, Ink, x + 92f, y, 76f, 16f, TextAnchor.MiddleRight);
+            Value(r, "S" + i, values[i], 13, vColors[i], x + 92f, y, 76f, 16f, TextAnchor.MiddleRight);
         }
 
         Divider(r, 140f, w, LineSoft);
-        Txt(r, "Note", "目标 85% · 较昨日 +0.6%", 9, Muted, TextAnchor.MiddleLeft, 14f, 146f, w - 28f, 12f);
+        Txt(r, "Note", "目标 85% · 较昨日 +0.7%", 9, Muted, TextAnchor.MiddleLeft, 14f, 146f, w - 28f, 12f);
         Img(r, "BarTrack", 14f, 162f, w - 28f, 6f, Track);
-        Img(r, "BarFill", 14f, 162f, (w - 28f) * 0.871f, 6f, Cyan);
+        Img(r, "BarFill", 14f, 162f, (w - 28f) * 0.864f, 6f, Ok);
 
-        Txt(r, "Foot", "累计运行 6,420 h · 故障 2 次", 9, Muted, TextAnchor.UpperLeft, 14f, 178f, w - 28f, 12f);
+        Txt(r, "Foot", "能耗同比 -3.2% · 环保达标", 9, Muted, TextAnchor.UpperLeft, 14f, 178f, w - 28f, 12f);
     }
 
-    // ------------------------------------------------------------------ 右 4 设备状态清单
+    // ------------------------------------------------------------------ 右 4 工段设备清单
 
     static void BuildDeviceList(RectTransform frame)
     {
@@ -537,32 +529,33 @@ public static class QualityMain4Builder
         float w = r.sizeDelta.x;
 
         float c1 = 14f;
-        float c2 = w * 0.56f;
+        float c2 = w * 0.32f;
         float c3 = w - 74f;
 
-        Txt(r, "H1", "设备名称", 9, Muted, TextAnchor.MiddleLeft, c1, 8f, 200f, 14f);
-        Txt(r, "H2", "工段", 9, Muted, TextAnchor.MiddleLeft, c2, 8f, 90f, 14f);
+        Txt(r, "H1", "工段", 9, Muted, TextAnchor.MiddleLeft, c1, 8f, 90f, 14f);
+        Txt(r, "H2", "设备", 9, Muted, TextAnchor.MiddleLeft, c2, 8f, 200f, 14f);
         Txt(r, "H3", "状态", 9, Muted, TextAnchor.MiddleRight, c3, 8f, 60f, 14f);
         Divider(r, 24f, w, Line);
 
-        string[] names = { "一混粉碎机", "一混发酵床", "二混混合机", "天然气烘干机", "除尘风机" };
-        string[] sections = { "前处理", "一混", "二混", "烘干", "环保" };
-        string[] states = { "运行", "运行", "运行", "运行", "报警" };
-        bool[] alarm = { false, false, false, false, true };
+        string[] sections = { "原料前处理", "原料前处理", "一混发酵", "一混发酵", "二混混合", "烘干包装", "动力环保" };
+        string[] names = { "原料库 / 料筒仓", "一混粉碎机", "一混发酵床", "液体发酵罐", "二混混合机", "天然气烘干机", "除尘风机" };
+        string[] states = { "运行", "运行", "运行", "关注", "运行", "运行", "运行" };
+        bool[] warn = { false, false, false, true, false, false, false };
 
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 7; i++)
         {
-            float y = 30f + i * 25f;
-            Color sc = alarm[i] ? Warn : Ok;
-            Txt(r, "N" + i, names[i], 9, Ink, TextAnchor.MiddleLeft, c1, y, 130f, 14f);
-            Txt(r, "C" + i, sections[i], 9, Muted, TextAnchor.MiddleLeft, c2, y, 60f, 14f);
+            float y = 30f + i * 21f;
+            Color sc = warn[i] ? Warn : Ok;
+            Txt(r, "C" + i, sections[i], 9, Muted, TextAnchor.MiddleLeft, c1, y, 80f, 14f);
+            Txt(r, "N" + i, names[i], 9, Ink, TextAnchor.MiddleLeft, c2, y, 150f, 14f);
             Img(r, "Dot" + i, c3 - 4f, y + 5f, 5f, 5f, sc);
             Txt(r, "S" + i, states[i], 9, sc, TextAnchor.MiddleRight, c3 + 4f, y, 46f, 14f);
-            Divider(r, y + 21f, w, LineSoft);
+            Divider(r, y + 18f, w, LineSoft);
         }
 
-        Txt(r, "FootL", "在线 31 台", 9, Muted, TextAnchor.UpperLeft, 14f, 176f, 110f, 12f);
-        Txt(r, "FootC", "运行 27 台", 9, Muted, TextAnchor.UpperCenter, w * 0.38f, 176f, 110f, 12f);
-        Txt(r, "FootR", "报警 1 台", 9, Warn, TextAnchor.UpperRight, w - 118f, 176f, 104f, 12f);
+        Txt(r, "FootL", "运行 <color=#EDF7FF>27</color>", 9, Muted, TextAnchor.UpperLeft, 14f, 184f, 70f, 12f);
+        Txt(r, "Foot1", "待机 <color=#EDF7FF>2</color>", 9, Muted, TextAnchor.UpperLeft, w * 0.28f, 184f, 60f, 12f);
+        Txt(r, "Foot2", "检修 <color=#9CAFC2>1</color>", 9, Muted, TextAnchor.UpperCenter, w * 0.52f, 184f, 60f, 12f);
+        Txt(r, "FootR", "报警 <color=#F6C063>1</color>", 9, Muted, TextAnchor.UpperRight, w - 70f, 184f, 56f, 12f);
     }
 }

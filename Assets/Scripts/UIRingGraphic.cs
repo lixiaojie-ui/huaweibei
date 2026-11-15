@@ -8,6 +8,7 @@ namespace Daima
     /// 纯 UI 的圆环/仪表盘图元：按数值比例把圆环切成若干段，不依赖任何贴图。
     /// 角度：0 度为右侧，逆时针为正。
     /// </summary>
+    [RequireComponent(typeof(CanvasRenderer))]
     public class UIRingGraphic : MaskableGraphic
     {
         [SerializeField] List<float> values = new List<float> { 1f };
@@ -16,6 +17,13 @@ namespace Daima
         [SerializeField] float startAngle = 90f;
         [SerializeField] float sweepDegrees = 360f;
         [SerializeField] float gapDegrees = 0f;
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            // 圆环/仪表盘同样是装饰图元，不接收点击，避免挡住下层按钮
+            raycastTarget = false;
+        }
 
         public void SetData(IList<float> newValues, IList<Color> newColors,
                             float widthRatio, float start, float sweep, float gap)

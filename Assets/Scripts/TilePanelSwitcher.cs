@@ -95,6 +95,14 @@ namespace Daima
                     ShowPage(pages, target);
                     SetSelected(entries, target);
                     ChartEntranceAnimator.PlayPage(pages[target]);
+
+                    // main6 是智能体页：Button robot 进入时切到“机器人智能体”
+                    if (target == 6)
+                    {
+                        AgentChatPanel panel = pages[target].GetComponentInChildren<AgentChatPanel>(true);
+                        if (panel != null) panel.SelectAgent(panel.robotAgentIndex);
+                    }
+
                     Debug.Log("[TilePanelSwitcher] 切换到页面 " + target);
                 });
             }
