@@ -45,8 +45,8 @@ namespace Daima.EditorTools
             Scene scene = SceneManager.GetActiveScene();
             if (!scene.IsValid() || !scene.isLoaded || string.IsNullOrEmpty(scene.path)) return;
 
-            // 恢复被上一版“美化”改过的场景对象（面板底图、外框、标题颜色等）
-            RestoreBaseline();
+            // 不再自动“恢复基线”：那会把用户手工删掉/隐藏的对象重新打开，
+            // 并把改过的标题颜色改回去。场景以用户保存的为准。
 
             // 用户主动清除过，就不再自动加
             if (EditorPrefs.GetBool(SuppressPrefix + scene.path, false)) return;

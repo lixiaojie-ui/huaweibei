@@ -19,7 +19,7 @@ namespace Daima
             public float offsetX;   // 散开时的位移量（左为负、右为正）
         }
 
-        static readonly int[] Pages = { 1, 2, 4, 5 };
+        static readonly int[] Pages = { 1, 2 };
 
         const float Duration = 1.2f;   // 散开/收拢动画时长（秒）
         const float CenterHalfWidth = 0.15f;    // 屏幕宽度的比例

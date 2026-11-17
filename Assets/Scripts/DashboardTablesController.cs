@@ -45,13 +45,6 @@ namespace Daima
         static readonly Color EmptyWarning = new Color(0.905f, 0.950f, 0.980f, 0.45f);
         static readonly Color AgvAlertRed = new Color(1f, 0.42f, 0.42f, 1f);
 
-        // 物料库存模块原有配色（恢复被上一版代码提亮/加粗的字体与图例）
-        static readonly Color LegacyMutedText = new Color(0.620f, 0.740f, 0.850f, 1f);
-        static readonly Color LegacyLegendText = new Color(0.84313726f, 0.8784314f, 0.9137255f, 1f);
-        static readonly Color LegacyLegendRaw = new Color(0.200f, 0.760f, 0.920f, 1f);
-        static readonly Color LegacyLegendLine = new Color(0.980f, 0.700f, 0.240f, 1f);
-        static readonly Color LegacyLegendFinished = new Color(0.260f, 0.870f, 0.620f, 1f);
-
         static readonly ColumnDef[] OrderColumns =
         {
             new ColumnDef("订单号", 1.45f, CellRole.Text),
@@ -73,7 +66,26 @@ namespace Daima
 
         void Start()
         {
-            if (Application.isPlaying) BuildAll();
+            if (!Application.isPlaying) return;
+
+            // 运行后必须与编辑器里保存的场景完全一致：
+            // 不调用 BuildAll（那会先清空 __Table_ 再按代码重建，导致删掉的元素复活、
+            // 手动改过的字号/颜色/间距被覆盖），这里只把接口数据写进已有文字控件。
+            RefreshRuntimeData();
+        }
+
+        /// <summary>
+        /// 运行时数据刷新：只更新现有控件的文字，不新建、不删除、不改变任何颜色/字号/间距/启用状态。
+        /// 接口和本地缓存都不可用时直接保持场景原样。
+        /// </summary>
+        void RefreshRuntimeData()
+        {
+            DashboardSnapshot snapshot = PlanApiClient.LoadSnapshot();
+            if (snapshot == null) return;
+
+            BindLegacyOrderTable(snapshot.orders, false);
+            BindLegacyAgv(snapshot.agv, snapshot.agvAlert, false);
+            BindLegacyInventory(snapshot.inventoryKpi, false);
         }
 
         /// <summary>刷新 Image1~Image5 的内容：原手工模块只更新数据，右侧两张图重建。</summary>
@@ -215,12 +227,12 @@ namespace Daima
 
         // ---------------------------------------------------------------- 订单明细（原手工表格）
 
-        bool BindLegacyOrderTable(List<OrderRowData> source)
+        bool BindLegacyOrderTable(List<OrderRowData> source, bool applySceneStyle = true)
         {
             Transform table = FindChildRecursive(image1, "表格内容1");
             if (table == null) return false;
 
-            table.gameObject.SetActive(true);
+            if (applySceneStyle) table.gameObject.SetActive(true);
             orders = source != null && source.Count > 0 ? source : DashboardMockData.CreateOrders();
 
             Transform content = table.Find("Scroll/Viewport/Content");
@@ -236,19 +248,21 @@ namespace Daima
                 if (row == null) continue;
 
                 bool used = i < orders.Count;
-                row.gameObject.SetActive(used);
-                if (!used) continue;
+                if (applySceneStyle) row.gameObject.SetActive(used);
+                if (!used || !row.gameObject.activeSelf) continue;
 
                 OrderRowData data = orders[i];
-                SetLegacyCell(row, "C_订单号", data.orderId);
-                SetLegacyCell(row, "C_产品型号", data.model);
-                SetLegacyCell(row, "C_数量", data.quantity.ToString(CultureInfo.InvariantCulture));
-                SetLegacyCell(row, "C_交货时间", data.delivery);
-                SetLegacyCell(row, "C_库存", data.stock.ToString(CultureInfo.InvariantCulture));
-                SetLegacyStatusCell(row, "C_状态", data.status);
-                SetLegacyWarningCell(row, "C_预警", data.warning);
+                SetLegacyCell(row, "C_订单号", data.orderId, applySceneStyle);
+                SetLegacyCell(row, "C_产品型号", data.model, applySceneStyle);
+                SetLegacyCell(row, "C_数量", data.quantity.ToString(CultureInfo.InvariantCulture), applySceneStyle);
+                SetLegacyCell(row, "C_交货时间", data.delivery, applySceneStyle);
+                SetLegacyCell(row, "C_库存", data.stock.ToString(CultureInfo.InvariantCulture), applySceneStyle);
+                SetLegacyStatusCell(row, "C_状态", data.status, applySceneStyle);
+                SetLegacyWarningCell(row, "C_预警", data.warning, applySceneStyle);
             }
 
+            // 自动滚动需要 Content 高于视口：副本都排在可视区下方，
+            // 起始画面与编辑器一致，只有滚动时才看得到循环副本。
             ScrollRect scroll = table.GetComponentInChildren<ScrollRect>(true);
 
             RectTransform contentRect = content as RectTransform;
@@ -320,7 +334,7 @@ namespace Daima
             content.sizeDelta = new Vector2(content.sizeDelta.x, span * (copies + 1));
         }
 
-        static void SetLegacyCell(Transform row, string cellName, string value)
+        static void SetLegacyCell(Transform row, string cellName, string value, bool applyStyle = true)
         {
             Transform cell = row.Find(cellName);
             if (cell == null) return;
@@ -329,16 +343,13 @@ namespace Daima
             if (label != null)
             {
                 label.text = value;
-                label.color = PlainText;
+                if (applyStyle) label.color = PlainText;
             }
-
-            Image bg = cell.GetComponent<Image>();
-            if (bg != null) bg.color = Color.clear;
 
             SyncEditorText(cell, value);
         }
 
-        static void SetLegacyStatusCell(Transform row, string cellName, string value)
+        static void SetLegacyStatusCell(Transform row, string cellName, string value, bool applyStyle = true)
         {
             Transform cell = row.Find(cellName);
             if (cell == null) return;
@@ -349,16 +360,19 @@ namespace Daima
             if (label != null)
             {
                 label.text = value;
-                label.color = Color.Lerp(color, Color.white, 0.35f);
+                if (applyStyle) label.color = Color.Lerp(color, Color.white, 0.35f);
             }
 
-            Image bg = cell.GetComponent<Image>();
-            if (bg != null) bg.color = new Color(color.r, color.g, color.b, 0.22f);
+            if (applyStyle)
+            {
+                Image bg = cell.GetComponent<Image>();
+                if (bg != null) bg.color = new Color(color.r, color.g, color.b, 0.22f);
+            }
 
             SyncEditorText(cell, value);
         }
 
-        static void SetLegacyWarningCell(Transform row, string cellName, string value)
+        static void SetLegacyWarningCell(Transform row, string cellName, string value, bool applyStyle = true)
         {
             Transform cell = row.Find(cellName);
             if (cell == null) return;
@@ -367,11 +381,12 @@ namespace Daima
             if (label != null)
             {
                 label.text = value;
-                label.color = string.IsNullOrEmpty(value)
-                    ? EmptyWarning
-                    : TableStyle.WarningColor(value);
+                if (applyStyle)
+                    label.color = string.IsNullOrEmpty(value)
+                        ? EmptyWarning
+                        : TableStyle.WarningColor(value);
 
-                // 预警列保持常亮，不做闪烁
+                // 预警列保持常亮，不做闪烁（Play 时也要和编辑器里的静帧一致）
                 WarningBlink blink = label.GetComponent<WarningBlink>();
                 if (blink != null) blink.enabled = false;
             }
@@ -408,12 +423,12 @@ namespace Daima
 
         // ---------------------------------------------------------------- AGV 实时调度（原手工示意图）
 
-        bool BindLegacyAgv(AgvKpiData kpi, string alertText)
+        bool BindLegacyAgv(AgvKpiData kpi, string alertText, bool applySceneStyle = true)
         {
             Transform root = FindChildRecursive(image2, "表格内容2");
             if (root == null) return false;
 
-            root.gameObject.SetActive(true);
+            if (applySceneStyle) root.gameObject.SetActive(true);
 
             Text[] texts = root.GetComponentsInChildren<Text>(true);
 
@@ -443,7 +458,7 @@ namespace Daima
                     warningText.text = string.IsNullOrEmpty(alertText)
                         ? "● 暂无 AGV 告警"
                         : "● " + alertText;
-                    warningText.color = AgvAlertRed;
+                    if (applySceneStyle) warningText.color = AgvAlertRed;
                 }
             }
 
@@ -472,13 +487,12 @@ namespace Daima
 
         // ---------------------------------------------------------------- 物料库存趋势（原手工三环图）
 
-        bool BindLegacyInventory(InventoryKpiData kpi)
+        bool BindLegacyInventory(InventoryKpiData kpi, bool applySceneStyle = true)
         {
             Transform root = FindChildRecursive(image5, "物料库存趋势");
             if (root == null) return false;
 
-            root.gameObject.SetActive(true);
-            RestoreLegacyInventoryTypography(root);
+            if (applySceneStyle) root.gameObject.SetActive(true);
             if (kpi == null) return true;
 
             int raw = kpi.raw;
@@ -501,51 +515,6 @@ namespace Daima
             BindInventoryRing(root, texts, "成品", finished, "RingArc3");
 
             return true;
-        }
-
-        /// <summary>
-        /// 物料库存模块沿用原手工三环图：恢复原字号、原文字颜色、原图例圆点大小与颜色。
-        /// 上一版代码把 KpiLabel/RingLabel/LegendText 提亮、放大，并放大了图例圆点。
-        /// </summary>
-        static void RestoreLegacyInventoryTypography(Transform root)
-        {
-            Text[] texts = root.GetComponentsInChildren<Text>(true);
-            for (int i = 0; i < texts.Length; i++)
-            {
-                Text text = texts[i];
-                string name = text.gameObject.name;
-
-                if (name == "KpiLabel" && text.text == "当前总库存")
-                {
-                    text.fontSize = 10;
-                    text.color = LegacyMutedText;
-                }
-                else if (name == "RingLabel")
-                {
-                    text.color = LegacyMutedText;
-                }
-                else if (name == "LegendText")
-                {
-                    text.fontSize = 11;
-                    text.color = LegacyLegendText;
-                }
-            }
-
-            // 图例圆点按从左到右还原：原材料（蓝）/ 线边库存（橙）/ 成品（绿）
-            List<Image> dots = new List<Image>();
-            Image[] images = root.GetComponentsInChildren<Image>(true);
-            for (int i = 0; i < images.Length; i++)
-            {
-                if (images[i].gameObject.name == "LegendDot") dots.Add(images[i]);
-            }
-            dots.Sort((a, b) => a.rectTransform.anchoredPosition.x.CompareTo(b.rectTransform.anchoredPosition.x));
-
-            Color[] colors = { LegacyLegendRaw, LegacyLegendLine, LegacyLegendFinished };
-            for (int i = 0; i < dots.Count; i++)
-            {
-                dots[i].color = colors[Mathf.Min(i, colors.Length - 1)];
-                dots[i].rectTransform.sizeDelta = new Vector2(8f, 8f);
-            }
         }
 
         static void BindInventoryRing(Transform root, Text[] texts, string category, int value, string arcPrefix)

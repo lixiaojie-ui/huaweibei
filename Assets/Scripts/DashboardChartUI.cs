@@ -9,12 +9,23 @@ namespace Daima
     /// 在 UI 里画折线（用归一化坐标：0~1 映射到自身 Rect）。
     /// 不依赖任何贴图/图片，只在网格里生成三角面。
     /// </summary>
+    [RequireComponent(typeof(CanvasRenderer))]
     public class UILineGraphic : MaskableGraphic
     {
         [SerializeField] List<Vector2> points = new List<Vector2>();
         public float thickness = 2f;
         [SerializeField] float dotSize = 0f;
         [SerializeField] Color dotColor = Color.white;
+
+        protected override void OnEnable()
+        {
+            // 老场景里的折线对象可能缺少 CanvasRenderer，这里补上，避免射线检测/渲染报错
+            if (GetComponent<CanvasRenderer>() == null) gameObject.AddComponent<CanvasRenderer>();
+
+            base.OnEnable();
+            // 折线只是装饰图元，不接收点击；否则缺少 CanvasRenderer 时会让 GraphicRaycaster 抛异常，导致整页按钮失灵
+            raycastTarget = false;
+        }
 
         public void SetData(IList<Vector2> normalizedPoints, float lineThickness, float pointSize, Color pointsColor)
         {

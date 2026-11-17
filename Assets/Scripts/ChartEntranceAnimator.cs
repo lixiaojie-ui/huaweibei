@@ -88,9 +88,9 @@ namespace Daima
             StartCoroutine(SlideFills(page));
             StartCoroutine(GrowRings(page));
 
-            // 数据大屏（main2 / main4 / main5）：环形仪表充能、条形生长、热力格/散点弹出、折线逐段绘制
+            // 数据大屏（main2）：环形仪表充能、条形生长、热力格/散点弹出、折线逐段绘制
             int pageIndex = PageIndexOf(page != null ? page.name : null);
-            if (pageIndex == 2 || pageIndex == 4 || pageIndex == 5)
+            if (pageIndex == 2)
             {
                 StartCoroutine(ChargeEnergyRings(page));
                 StartCoroutine(GrowFlatBars(page));
