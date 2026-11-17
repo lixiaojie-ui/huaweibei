@@ -38,6 +38,8 @@ namespace Daima
         public static readonly Color LoadGap = new Color(1.00f, 0.56f, 0.48f);    // #FF8F7A 产能缺口
         public static readonly Color TextColor = new Color(0.905f, 0.950f, 0.980f);
         public static readonly Color Muted = new Color(0.620f, 0.740f, 0.850f);
+        /// <summary>图例文字色，与场景里手工图例（0.84,0.88,0.91）一致。</summary>
+        public static readonly Color LegendMuted = new Color(0.840f, 0.880f, 0.910f);
         public static readonly Color GridColor = new Color(0.70f, 0.88f, 1f, 0.10f);
         public static readonly Color Track = new Color(0.42f, 0.55f, 0.68f, 0.35f);
         public static readonly Color EdgeColor = new Color(0.30f, 0.70f, 0.95f, 0.35f);
@@ -548,6 +550,9 @@ namespace Daima
             return image;
         }
 
+        /// <summary>运行时代码生成图表时的整体字号放大系数（与场景里手工版本对齐）。</summary>
+        public const float FontScale = 1.35f;
+
         static Text Txt(Transform parent, string name, string content, int size, Color color,
                         TextAnchor align, float x, float y, float width, float height,
                         Font font, FontStyle style = FontStyle.Normal)
@@ -555,7 +560,7 @@ namespace Daima
             RectTransform rect = Panel(parent, name, x, y, width, height);
             var text = rect.gameObject.AddComponent<Text>();
             text.font = font;
-            text.fontSize = size;
+            text.fontSize = Mathf.RoundToInt(size * FontScale);
             text.color = color;
             text.alignment = align;
             text.fontStyle = style;
@@ -563,7 +568,7 @@ namespace Daima
             text.raycastTarget = false;
             text.supportRichText = false;
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
             text.resizeTextForBestFit = false;
             return text;
         }
@@ -600,8 +605,7 @@ namespace Daima
         static float Legend(RectTransform root, Font font, float x, float y, Color color, string text)
         {
             Img(root, "LegendDot", color, x, y + 4f, 8f, 8f);
-            Txt(root, "LegendText", text, 11, Muted, TextAnchor.MiddleLeft,
-                x + 13f, y, 92f, 16f, font);
+            Txt(root, "LegendText", text, 11, LegendMuted, TextAnchor.MiddleLeft, x + 13f, y, 92f, 16f, font);
 
             return x + 13f + text.Length * 11f + 18f;
         }
@@ -609,8 +613,7 @@ namespace Daima
         static float LineLegend(RectTransform root, Font font, float x, float y, Color color, string text)
         {
             Img(root, "LegendLine", color, x, y + 6f, 14f, 2f);
-            Txt(root, "LegendText", text, 10, Muted, TextAnchor.MiddleLeft,
-                x + 19f, y, 130f, 16f, font);
+            Txt(root, "LegendText", text, 10, LegendMuted, TextAnchor.MiddleLeft, x + 19f, y, 130f, 16f, font);
 
             return x + 19f + text.Length * 10f + 14f;
         }
