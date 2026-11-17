@@ -85,6 +85,31 @@ namespace Daima
                 }
 
                 Debug.Log("[BtnDiag] 诊断完成");
+
+                foreach (Button button in Object.FindObjectsOfType<Button>(true))
+                {
+                    if (button == null || button.gameObject.name != "chanxianzonglan") continue;
+
+                    int count = button.onClick.GetPersistentEventCount();
+                    string detail = "";
+                    for (int i = 0; i < count; i++)
+                    {
+                        UnityEngine.Object target = button.onClick.GetPersistentTarget(i);
+                        detail += " [" + i + "] target=" +
+                            (target != null ? target.name + "(" + target.GetType().Name + ")" : "null") +
+                            " method=" + button.onClick.GetPersistentMethodName(i);
+                    }
+
+                    Debug.Log("[BtnDiag] 子页签 chanxianzonglan onClick=" + count + "个:" + detail);
+                }
+            }
+
+            static string EnabledCameras()
+            {
+                string names = "";
+                foreach (Camera cam in Camera.allCameras)
+                    names += cam.name + "(depth " + cam.depth + ") ";
+                return names == "" ? "无" : names;
             }
 
             void LogClick()
@@ -109,7 +134,8 @@ namespace Daima
                         "(" + (c != null ? c.renderMode + "," + c.name : "无Canvas") + ")";
                 }
 
-                Debug.Log("[BtnDiag] 点击 @ " + Input.mousePosition + " 命中" + results.Count + "个:" + hits);
+                Debug.Log("[BtnDiag] 点击 @ " + Input.mousePosition + " 相机=" + EnabledCameras() +
+                    " 命中" + results.Count + "个:" + hits);
             }
         }
     }

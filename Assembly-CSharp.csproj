@@ -60,11 +60,24 @@
     <Analyzer Include="D:\Program Files\2022.3.62f3c1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\生产\CameraFlyTo.cs" />
+    <Compile Include="Assets\Scripts\DashboardTableData.cs" />
+    <Compile Include="Assets\Scripts\PanelSlideController.cs" />
     <Compile Include="Assets\Scripts\TechBackground.cs" />
+    <Compile Include="Assets\Scripts\PlanApiClient.cs" />
     <Compile Include="Assets\Scripts\CameraViewSwitcher.cs" />
+    <Compile Include="Assets\Scripts\DashboardChartUI.cs" />
+    <Compile Include="Assets\Scripts\WarningBlink.cs" />
     <Compile Include="Assets\Scripts\生产\SubTabTextHighlight.cs" />
     <Compile Include="Assets\Scripts\ChartHoverTooltipView.cs" />
+    <Compile Include="Assets\Scripts\生产\ShebeiButtonClickAssist.cs" />
+    <Compile Include="Assets\Scripts\EditableCell.cs" />
+    <Compile Include="Assets\Scripts\生产\CameraSwitchToPoint.cs" />
+    <Compile Include="Assets\Scripts\DashboardTableFactory.cs" />
+    <Compile Include="Assets\Scripts\DashboardChartFactory.cs" />
     <Compile Include="Assets\Scripts\ChartHoverTooltipItem.cs" />
+    <Compile Include="Assets\Scripts\生产\SubTabEffectAuto.cs" />
+    <Compile Include="Assets\HoloCone\Scripts\HoloConeMesh.cs" />
     <Compile Include="Assets\Scripts\MouseCameraController.cs" />
     <Compile Include="Assets\Scripts\生产\OverlayRaycastCleanup.cs" />
     <Compile Include="Assets\Scripts\FloatingButtonDiagnostics.cs" />
@@ -74,24 +87,34 @@
     <Compile Include="Assets\Scripts\ChartEntranceAnimator.cs" />
     <Compile Include="Assets\Scripts\生产\ToggleInfoPanel.cs" />
     <Compile Include="Assets\Scripts\TileButtonImageToggle.cs" />
+    <Compile Include="Assets\Scripts\UIRadarFillGraphic.cs" />
     <Compile Include="Assets\Scripts\TableAutoScroll.cs" />
+    <Compile Include="Assets\Scripts\UIAreaGraphic.cs" />
+    <Compile Include="Assets\Scripts\DashboardTablesController.cs" />
+    <Compile Include="Assets\Scripts\DashboardTableStyle.cs" />
+    <Compile Include="Assets\Scripts\生产\SubTabEffectSwitcher.cs" />
     <Compile Include="Assets\DarkGroundDemo\Scripts\DemoCameraRig.cs" />
     <Compile Include="Assets\DarkGroundDemo\Scripts\DemoMarkerPulse.cs" />
+    <Compile Include="Assets\Scripts\PanelSwitcher.cs" />
     <Compile Include="Assets\DarkGroundDemo\Scripts\DarkGroundDemoBootstrap.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
     <None Include="Assets\Resources\TechBackground\TechGrid.shader" />
+    <None Include="Assets\Resources\HoloCube\HoloGlass.shader" />
     <None Include="Assets\DarkGroundDemo\Resources\Shaders\HoloGrid.shader" />
     <None Include="Assets\Resources\TechBackground\TechParticle.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
     <None Include="Assets\DarkGroundDemo\Resources\Shaders\ParticleAdditive.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
+    <None Include="Assets\HoloCone\Shaders\HoloGroundGlow.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
+    <None Include="Assets\Resources\HoloCube\HoloEmissive.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface.shader" />
     <None Include="Assets\TextMesh Pro\Sprites\EmojiOne Attribution.txt" />
+    <None Include="Assets\HoloCone\Shaders\HoloCone.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap-Custom-Atlas.shader" />
     <None Include="Assets\DarkGroundDemo\Resources\Shaders\LightBeam.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF.shader" />

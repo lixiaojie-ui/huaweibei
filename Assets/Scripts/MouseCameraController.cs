@@ -82,13 +82,36 @@ namespace Daima
             if (changed) ApplyOrbit();
         }
 
+        /// <summary>
+        /// 相机被外部飞行脚本精确放到某个位姿后调用：只把当前朝向/位置读进内部轨道状态，
+        /// 不再把轨道状态写回相机。否则这里的 pitch 限制（顶视图的 90° 会被夹到 85°）
+        /// 和按 pivot 重算位置会立刻把相机从视角点上挪开，表现为点击后落点总是不对。
+        /// </summary>
+        public void SyncToCurrentView()
+        {
+            cam = GetComponent<Camera>();
+
+            // 视角点可能是 90° 正俯视；放宽上限，避免第一次拖动鼠标时被夹回 85° 而跳一下
+            float currentPitch = Mathf.Abs(NormalizeAngle(transform.eulerAngles.x));
+            pitchMax = Mathf.Max(pitchMax, currentPitch);
+
+            ReadCurrentView();
+            initialized = true;
+        }
+
         void EnsureInitialized()
         {
             if (initialized) return;
             initialized = true;
 
             cam = GetComponent<Camera>();
+            ReadCurrentView();
+            ApplyOrbit();
+        }
 
+        /// <summary>把相机当前位姿读成 yaw/pitch/距离/pivot，但不改动相机本身。</summary>
+        void ReadCurrentView()
+        {
             Vector3 euler = transform.eulerAngles;
             yaw = euler.y;
             pitch = NormalizeAngle(euler.x);
@@ -109,8 +132,6 @@ namespace Daima
 
             distance = Mathf.Clamp(initialDistance, minDistance, maxDistance);
             pivot = position + forward * distance;
-
-            ApplyOrbit();
         }
 
         void ApplyOrbit()
